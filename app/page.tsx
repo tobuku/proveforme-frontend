@@ -84,8 +84,15 @@ type CreateProjectFormState = {
   payPerVisit: string;
 };
 
-const BACKEND_BASE = "http://localhost:4000";
-const FRONTEND_BASE = "http://localhost:3000";
+// Use env vars in production, fall back to localhost in dev
+const BACKEND_BASE =
+  process.env.NEXT_PUBLIC_BACKEND_BASE || "http://localhost:4000";
+
+const FRONTEND_BASE =
+  typeof window !== "undefined"
+    ? window.location.origin
+    : process.env.NEXT_PUBLIC_FRONTEND_BASE || "http://localhost:3000";
+
 
 export default function Home() {
   // Health + open projects
