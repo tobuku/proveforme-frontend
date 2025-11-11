@@ -545,34 +545,39 @@ export default function Home() {
               </h2>
 
               {!authUser && (
-                <p className="text-xs text-slate-400">
-                  You&apos;re not logged in. Go to{" "}
-                  <span className="font-mono bg-slate-900 px-1 rounded">
-                    /login
-                  </span>{" "}
-                  and sign in as either an Investor or BG.
-                </p>
-              )}
+  <p className="text-xs text-slate-400">
+    You&apos;re not logged in. Go to{" "}
+    <span className="font-mono bg-slate-900 px-1 rounded">
+      /login
+    </span>{" "}
+    and sign in as either an Investor or Prover (BG role).
+  </p>
+)}
+
 
               {authUser && roleUpper === "BG" && (
-                <div className="space-y-2 text-xs text-slate-300">
-                  <p>
-                    You are logged in as{" "}
-                    <span className="font-semibold">BG (Boots on the Ground)</span>.
-                  </p>
-                  <p>
-                    Your main workspace is the{" "}
-                    <a
-                      href="/bg"
-                      className="text-emerald-300 underline hover:text-emerald-200"
-                    >
-                      /bg
-                    </a>{" "}
-                    dashboard. There you can see all your assigned visits and
-                    manage photos.
-                  </p>
-                </div>
-              )}
+  <div className="space-y-2 text-xs text-slate-300">
+    <p>
+      You are logged in as{" "}
+      <span className="font-semibold">
+        Prover (BG – Boots on the Ground role)
+      </span>
+      .
+    </p>
+    <p>
+      Your main workspace is the{" "}
+      <a
+        href="/bg"
+        className="text-emerald-300 underline hover:text-emerald-200"
+      >
+        /bg
+      </a>{" "}
+      dashboard. There you can see all your assigned visits and manage
+      photos.
+    </p>
+  </div>
+)}
+
 
               {authUser && roleUpper === "INVESTOR" && (
                 <div className="space-y-4 text-xs">
@@ -839,17 +844,18 @@ export default function Home() {
                                             {v.status}
                                           </p>
                                           {v.bg && (
-                                            <p className="text-[11px] text-slate-200">
-                                              <span className="font-semibold">
-                                                BG:
-                                              </span>{" "}
-                                              {v.bg.firstName} {v.bg.lastName} (
-                                              <span className="font-mono">
-                                                {v.bg.email}
-                                              </span>
-                                              )
-                                            </p>
-                                          )}
+  <p className="text-[11px] text-slate-200">
+    <span className="font-semibold">
+      Prover (BG):
+    </span>{" "}
+    {v.bg.firstName} {v.bg.lastName} (
+    <span className="font-mono">
+      {v.bg.email}
+    </span>
+    )
+  </p>
+)}
+
                                           {v.notes && (
                                             <p className="text-[11px] text-slate-300">
                                               <span className="font-semibold">
@@ -945,17 +951,19 @@ export default function Home() {
         </div>
 
         {/* Tiny dev-helper note at the bottom */}
-        <footer className="text-[10px] text-slate-500 pt-2 border-t border-slate-800">
-          <p>
-            Investor tools live here on the home dashboard. BG tools live at{" "}
-            <span className="font-mono bg-slate-800 px-1 rounded">/bg</span>. Photos
-            are handled on{" "}
-            <span className="font-mono bg-slate-800 px-1 rounded">
-              /upload-test
-            </span>{" "}
-            per visit.
-          </p>
-        </footer>
+      <footer className="text-[10px] text-slate-500 pt-2 border-t border-slate-800">
+  <p>
+    Investor tools live here on the home dashboard. Prover tools (BG role)
+    live at{" "}
+    <span className="font-mono bg-slate-800 px-1 rounded">/bg</span>. Photos
+    are handled on{" "}
+    <span className="font-mono bg-slate-800 px-1 rounded">
+      /upload-test
+    </span>{" "}
+    per visit.
+  </p>
+</footer>
+
       </div>
     </main>
   );
