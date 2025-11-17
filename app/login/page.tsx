@@ -1,34 +1,44 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { FormEvent, useState } from "react";
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:4000";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
+
+type AuthUser = {
+  id: string;
+  email: string;
+  role: "INVESTOR" | "BG";
+  firstName?: string | null;
+  lastName?: string | null;
+};
+
+type LoginResponse =
+  | {
+      ok: true;
+      token: string;
+      role?: "INVESTOR" | "BG";
+      user: AuthUser;
+    }
+  | {
+      ok: false;
+      error: string;
+    };
 
 export default function LoginPage() {
-  const router = useRouter();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [backendUrlForDisplay, setBackendUrlForDisplay] = useState(BACKEND_URL);
-
-  useEffect(() => {
-    setBackendUrlForDisplay(BACKEND_URL);
-  }, []);
-
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    setLoading(true);
+    setSubmitting(true);
 
     try {
-      const res = await fetch(`${BACKEND_URL}/api/v1/users/login`, {
+      const res = await fetch(`${API_BASE}/api/v1/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -36,181 +46,179 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      const rawText = await res.text();
       let data: any = null;
-
       try {
-        data = rawText ? JSON.parse(rawText) : null;
+        data = await res.json();
       } catch {
-        throw new Error(
-          `Login request failed with status ${res.status}. Response was not JSON.`
-        );
+        // ignore JSON parse errors, we'll fall back to generic message
       }
 
       if (!res.ok || !data || data.ok === false) {
         const message =
           data?.error ||
           `Login failed with status ${res.status}. Please check your email and password.`;
-        throw new Error(message);
+        setError(message);
+        return;
       }
 
-      // Try to read token/role directly from login response
-      let token: string | undefined =
-        data.token || data.accessToken || data.jwt || undefined;
-      let role: string | undefined =
-        data.role ||
-        data.user?.role ||
-        data.user?.type ||
-        data.userRole ||
-        undefined;
+      const loginData = data as LoginResponse & {
+        token?: string;
+        user?: AuthUser;
+        role?: "INVESTOR" | "BG";
+      };
 
-      if (!token) {
-        throw new Error("Login succeeded but token is missing from response.");
+      const token =
+        (loginData as any).token ||
+        (loginData as any).accessToken ||
+        (loginData as any).jwt;
+      const user =
+        (loginData as any).user || (loginData as any).data?.user || null;
+      const role =
+        (loginData as any).role ||
+        (user && (user as any).role) ||
+        "INVESTOR";
+
+      if (!token || !user) {
+        setError("Login response was missing required fields.");
+        return;
       }
 
-      // If no role yet, try /auth/me
-      if (!role) {
-        try {
-          const meRes = await fetch(`${BACKEND_URL}/api/v1/auth/me`, {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-
-          const meRaw = await meRes.text();
-          let meData: any = null;
-          try {
-            meData = meRaw ? JSON.parse(meRaw) : null;
-          } catch {
-            console.warn("Failed to parse /auth/me response as JSON");
-          }
-
-          if (meRes.ok && meData) {
-            role =
-              meData.user?.role ||
-              meData.role ||
-              meData.user?.type ||
-              meData.userRole ||
-              role;
-          }
-        } catch (innerErr) {
-          console.warn("Failed to fetch /auth/me for role discovery:", innerErr);
-        }
-      }
-
-      // If we *still* don't have a role, default to INVESTOR so the app remains usable
-      if (!role) {
-        console.warn(
-          "Login succeeded with token but no role. Defaulting to INVESTOR."
-        );
-        role = "INVESTOR";
-      }
-
-      if (typeof window !== "undefined") {
+      // Persist auth for homepage/dashboard
+      try {
         localStorage.setItem("pfm_token", token);
         localStorage.setItem("pfm_role", role);
-        localStorage.setItem("pfm_email", email);
+        localStorage.setItem("pfm_user", JSON.stringify(user));
+      } catch (storageErr) {
+        console.error("Failed to save auth info to localStorage", storageErr);
       }
 
+      // Redirect based on role
       if (role === "BG") {
-        router.push("/bg");
+        window.location.href = "/bg";
       } else {
-        router.push("/");
+        window.location.href = "/";
       }
     } catch (err: any) {
-      console.error("Login error:", err);
-      setError(err?.message || "Login failed. Please try again.");
+      console.error("Network error while logging in", err);
+      setError("Network error: failed to reach the server.");
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 flex flex-col items-center justify-center px-4">
-      <div className="w-full max-w-md space-y-6 bg-slate-900/70 border border-slate-700 rounded-xl p-6 shadow-lg">
-        <div className="space-y-1 text-center">
+    <div className="min-h-screen bg-slate-950 text-slate-50">
+      {/* HEADER */}
+      <header className="border-b border-slate-800 bg-slate-950/90 backdrop-blur">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
+          <Link href="/" className="flex items-center gap-2">
+            <span className="rounded-md bg-indigo-500 px-2 py-1 text-xs font-semibold tracking-wide">
+              PFM
+            </span>
+            <div className="leading-tight">
+              <p className="text-sm font-semibold">ProveForMe</p>
+              <p className="text-[10px] text-slate-400">
+                Local eyes for remote investors.
+              </p>
+            </div>
+          </Link>
+          <nav className="flex items-center gap-4 text-xs">
+            <Link href="/" className="text-slate-300 hover:text-white">
+              Home
+            </Link>
+            <Link href="/register" className="text-slate-300 hover:text-white">
+              Register
+            </Link>
+          </nav>
+        </div>
+      </header>
+
+      {/* MAIN */}
+      <main className="mx-auto flex max-w-md flex-col gap-4 px-4 py-8">
+        <div>
           <h1 className="text-xl font-semibold tracking-tight">
             ProveForMe Login
           </h1>
-          <p className="text-xs text-slate-300">
+          <p className="mt-1 text-xs text-slate-300">
             Securely access your member dashboard.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1 text-xs">
-            <label className="block text-slate-200" htmlFor="email">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4 rounded-lg border border-slate-800 bg-slate-900/40 p-4 text-sm"
+        >
+          <div className="space-y-1">
+            <label
+              htmlFor="email"
+              className="text-xs font-medium text-slate-200"
+            >
               Email
             </label>
             <input
               id="email"
               type="email"
               autoComplete="email"
-              className="w-full rounded-md border border-slate-600 bg-slate-950 px-3 py-2 text-xs text-slate-50 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+              required
+              className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-slate-50 outline-none focus:border-indigo-400"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              required
             />
           </div>
 
-          <div className="space-y-1 text-xs">
-            <label className="block text-slate-200" htmlFor="password">
+          <div className="space-y-1">
+            <label
+              htmlFor="password"
+              className="text-xs font-medium text-slate-200"
+            >
               Password
             </label>
             <input
               id="password"
               type="password"
               autoComplete="current-password"
-              className="w-full rounded-md border border-slate-600 bg-slate-950 px-3 py-2 text-xs text-slate-50 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+              required
+              className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-slate-50 outline-none focus:border-indigo-400"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required
             />
           </div>
 
           {error && (
-            <div className="text-[11px] text-rose-400 bg-rose-950/50 border border-rose-700 rounded-md px-3 py-2">
+            <div className="rounded-md border border-amber-600/70 bg-amber-950/40 px-3 py-2 text-[11px] text-amber-100">
               {error}
             </div>
           )}
 
           <button
             type="submit"
-            disabled={loading}
-            className="w-full rounded-md bg-emerald-500 text-slate-950 text-xs font-semibold py-2 hover:bg-emerald-400 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            disabled={submitting}
+            className="flex w-full items-center justify-center rounded-md bg-indigo-500 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? "Logging in..." : "Log In"}
+            {submitting ? "Logging in..." : "Log in"}
           </button>
         </form>
 
-        <div className="flex items-center justify-between text-[11px] text-slate-400">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1 text-slate-300 hover:text-emerald-300"
-          >
+        <div className="flex justify-between text-[11px] text-slate-400">
+          <Link href="/" className="hover:text-slate-200">
             ← Back to Homepage
           </Link>
-          <Link
-            href="/register"
-            className="text-emerald-300 hover:text-emerald-200"
-          >
-            Need an account? Register
-          </Link>
+          <div className="flex flex-col items-end gap-1">
+            <p>
+              Need an account?{" "}
+              <Link
+                href="/register"
+                className="font-medium text-indigo-300 hover:text-indigo-200"
+              >
+                Register
+              </Link>
+            </p>
+            <p className="text-[10px]">
+              Frontend → backend: {API_BASE}
+            </p>
+          </div>
         </div>
-
-        <div className="mt-3 border-t border-slate-800 pt-3 text-[10px] text-slate-500">
-          <p className="mb-1">
-            Frontend → backend:{" "}
-            <span className="font-mono break-all">{backendUrlForDisplay}</span>
-          </p>
-          <p>
-            If login fails with &quot;User not found&quot;, that&apos;s coming
-            from the backend and usually means the account hasn&apos;t been
-            seeded/registered in this environment yet.
-          </p>
-        </div>
-      </div>
+      </main>
     </div>
   );
 }
