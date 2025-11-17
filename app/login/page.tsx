@@ -26,6 +26,16 @@ type LoginResponse =
       error: string;
     };
 
+const LOGIN_ENDPOINTS = [
+  "/api/v1/auth/login",
+  "/api/v1/auth/sign-in",
+  "/api/v1/auth/signin",
+  "/api/auth/login",
+  "/auth/login",
+  "/api/v1/login",
+  "/api/login",
+];
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -38,69 +48,98 @@ export default function LoginPage() {
     setSubmitting(true);
 
     try {
-      const res = await fetch(`${API_BASE}/api/v1/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      let lastErrorMessage: string | null = null;
 
-      let data: any = null;
-      try {
-        data = await res.json();
-      } catch {
-        // ignore JSON parse errors, we'll fall back to generic message
+      for (const path of LOGIN_ENDPOINTS) {
+        const url = `${API_BASE}${path}`;
+        console.log("Trying login endpoint:", url);
+
+        try {
+          const res = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email, password }),
+          });
+
+          let data: any = null;
+          try {
+            data = await res.json();
+          } catch {
+            // ignore JSON parse errors, we'll fall back to generic message
+          }
+
+          if (res.status === 404) {
+            // Endpoint does not exist on this backend; try the next one
+            lastErrorMessage = `Login endpoint not found at ${path} (404).`;
+            continue;
+          }
+
+          if (!res.ok || !data || data.ok === false) {
+            const message =
+              data?.error ||
+              `Login failed at ${path} with status ${res.status}. Please check your email and password.`;
+            // Endpoint exists but rejected the login; no point trying others.
+            setError(message);
+            return;
+          }
+
+          const loginData = data as LoginResponse & {
+            token?: string;
+            user?: AuthUser;
+            role?: "INVESTOR" | "BG";
+          };
+
+          const token =
+            (loginData as any).token ||
+            (loginData as any).accessToken ||
+            (loginData as any).jwt;
+          const user =
+            (loginData as any).user || (loginData as any).data?.user || null;
+          const role =
+            (loginData as any).role ||
+            (user && (user as any).role) ||
+            "INVESTOR";
+
+          if (!token || !user) {
+            lastErrorMessage =
+              "Login response was missing required fields from backend.";
+            continue;
+          }
+
+          // Persist auth for homepage/dashboard
+          try {
+            localStorage.setItem("pfm_token", token);
+            localStorage.setItem("pfm_role", role);
+            localStorage.setItem("pfm_user", JSON.stringify(user));
+          } catch (storageErr) {
+            console.error("Failed to save auth info to localStorage", storageErr);
+          }
+
+          console.log("Login succeeded via endpoint:", path);
+
+          // Redirect based on role
+          if (role === "BG") {
+            window.location.href = "/bg";
+          } else {
+            window.location.href = "/";
+          }
+
+          return;
+        } catch (err: any) {
+          console.error("Network error while logging in via", path, err);
+          lastErrorMessage = `Network error: failed to reach the server at ${path}.`;
+          // try next endpoint
+          continue;
+        }
       }
 
-      if (!res.ok || !data || data.ok === false) {
-        const message =
-          data?.error ||
-          `Login failed with status ${res.status}. Please check your email and password.`;
-        setError(message);
-        return;
-      }
-
-      const loginData = data as LoginResponse & {
-        token?: string;
-        user?: AuthUser;
-        role?: "INVESTOR" | "BG";
-      };
-
-      const token =
-        (loginData as any).token ||
-        (loginData as any).accessToken ||
-        (loginData as any).jwt;
-      const user =
-        (loginData as any).user || (loginData as any).data?.user || null;
-      const role =
-        (loginData as any).role ||
-        (user && (user as any).role) ||
-        "INVESTOR";
-
-      if (!token || !user) {
-        setError("Login response was missing required fields.");
-        return;
-      }
-
-      // Persist auth for homepage/dashboard
-      try {
-        localStorage.setItem("pfm_token", token);
-        localStorage.setItem("pfm_role", role);
-        localStorage.setItem("pfm_user", JSON.stringify(user));
-      } catch (storageErr) {
-        console.error("Failed to save auth info to localStorage", storageErr);
-      }
-
-      // Redirect based on role
-      if (role === "BG") {
-        window.location.href = "/bg";
-      } else {
-        window.location.href = "/";
-      }
-    } catch (err: any) {
-      console.error("Network error while logging in", err);
-      setError("Network error: failed to reach the server.");
+      // If we got here, none of the endpoints worked
+      setError(
+        lastErrorMessage ||
+          "Unable to reach any login endpoint on the backend. Please try again later."
+      );
     } finally {
       setSubmitting(false);
     }
