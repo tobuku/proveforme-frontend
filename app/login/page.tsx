@@ -26,7 +26,12 @@ type LoginResponse =
       error: string;
     };
 
+// We now know register is at /api/v1/users/register
+// So first guesses for login are under /api/v1/users/*
 const LOGIN_ENDPOINTS = [
+  "/api/v1/users/login",
+  "/api/v1/users/sign-in",
+  "/api/v1/users/signin",
   "/api/v1/auth/login",
   "/api/v1/auth/sign-in",
   "/api/v1/auth/signin",
