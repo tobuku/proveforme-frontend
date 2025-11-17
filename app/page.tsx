@@ -1,330 +1,259 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
-type HealthResponse = {
-  status: string;
-  message: string;
-};
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
 
-type Project = {
-  id: string;
-  title: string;
-  description: string | null;
-  city: string;
-  state: string;
-  payPerVisit: string;
-  status?: string;
-  createdAt?: string;
-};
+type BackendHealth = {
+  ok: boolean;
+  message?: string;
+} | null;
 
-type AuthedUser = {
+type AuthUser = {
   id: string;
-  firstName: string;
-  lastName: string;
   email: string;
   role: "INVESTOR" | "BG";
+  firstName?: string | null;
+  lastName?: string | null;
 };
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  process.env.NEXT_PUBLIC_BACKEND_BASE ||
-  "http://localhost:4000";
-
 export default function Home() {
-  const [health, setHealth] = useState<HealthResponse | null>(null);
-  const [healthError, setHealthError] = useState<string | null>(null);
+  const [backendHealth, setBackendHealth] = useState<BackendHealth>(null);
+  const [backendError, setBackendError] = useState<string | null>(null);
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
 
-  const [openProjects, setOpenProjects] = useState<Project[]>([]);
-  const [projectsError, setProjectsError] = useState<string | null>(null);
-  const [projectsLoading, setProjectsLoading] = useState(false);
-
-  const [authUser, setAuthUser] = useState<AuthedUser | null>(null);
-  const [authChecked, setAuthChecked] = useState(false);
-
-  // Load backend health + open projects (even if we don't show them yet,
-  // this keeps the wiring in place for future UX).
+  // Backend health check
   useEffect(() => {
-    // Health
     fetch(`${API_BASE}/api/v1/health`)
       .then(async (res) => {
         if (!res.ok) throw new Error(`Health failed (${res.status})`);
-        const data = (await res.json()) as HealthResponse;
-        setHealth(data);
-      })
-      .catch((err) => {
-        console.error("Health check error:", err);
-        setHealthError("Failed to contact backend.");
-      });
-
-    // Open projects
-    setProjectsLoading(true);
-    fetch(`${API_BASE}/api/v1/projects/open`)
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`Open projects failed (${res.status})`);
-        const data = await res.json();
-        if (data.ok && Array.isArray(data.projects)) {
-          setOpenProjects(data.projects);
-        } else {
-          setProjectsError("Failed to load projects");
-        }
-      })
-      .catch((err) => {
-        console.error("Open projects error:", err);
-        setProjectsError("Failed to load projects");
-      })
-      .finally(() => setProjectsLoading(false));
-  }, []);
-
-  // Load auth user from token via /auth/me
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const token = window.localStorage.getItem("pfm_token");
-    if (!token) {
-      setAuthChecked(true);
-      return;
-    }
-
-    fetch(`${API_BASE}/api/v1/auth/me`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`auth/me failed (${res.status})`);
         return res.json();
       })
       .then((data) => {
-        if (data.ok && data.user) {
-          setAuthUser(data.user as AuthedUser);
-        }
+        setBackendHealth(data);
+        setBackendError(null);
       })
       .catch((err) => {
-        console.error("auth/me error:", err);
-      })
-      .finally(() => setAuthChecked(true));
+        console.error("Backend health error", err);
+        setBackendError("Failed to contact backend.");
+      });
   }, []);
 
-  const fullName = authUser
-    ? `${authUser.firstName} ${authUser.lastName}`.trim()
-    : "";
+  // Read auth from localStorage (set by /login)
+  useEffect(() => {
+    try {
+      const token = localStorage.getItem("pfm_token");
+      const role = localStorage.getItem("pfm_role") as
+        | "INVESTOR"
+        | "BG"
+        | null;
+      const rawUser = localStorage.getItem("pfm_user");
+
+      if (token && role && rawUser) {
+        const user = JSON.parse(rawUser) as AuthUser;
+        setAuthUser({ ...user, role });
+      } else {
+        setAuthUser(null);
+      }
+    } catch (err) {
+      console.error("Failed to read auth from storage", err);
+      setAuthUser(null);
+    }
+  }, []);
+
+  // IMPORTANT: Investor -> /investor, BG -> /bg
+  const dashboardHref =
+    authUser?.role === "BG" ? "/bg" : "/investor";
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100">
-      {/* Top bar */}
-      <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 border border-emerald-500/40">
-              <span className="text-sm font-bold text-emerald-300">PFM</span>
-            </div>
-            <div>
-              <h1 className="text-sm font-semibold tracking-tight md:text-base">
-                ProveForMe
-              </h1>
-              <p className="hidden text-[10px] text-slate-400 sm:block">
+    <div className="min-h-screen bg-slate-950 text-slate-50">
+      {/* HEADER / NAV */}
+      <header className="border-b border-slate-800 bg-slate-950/90 backdrop-blur">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
+          <Link href="/" className="flex items-center gap-2">
+            <span className="rounded-md bg-indigo-500 px-2 py-1 text-xs font-semibold tracking-wide">
+              PFM
+            </span>
+            <div className="leading-tight">
+              <p className="text-sm font-semibold">ProveForMe</p>
+              <p className="text-[10px] text-slate-400">
                 Local eyes for remote investors.
               </p>
             </div>
-          </div>
-
-          <nav className="flex items-center gap-3 text-xs">
-            <a
-              href="/"
-              className="rounded px-2 py-1 text-slate-300 hover:bg-slate-800/70"
-            >
+          </Link>
+          <nav className="flex items-center gap-4 text-xs">
+            <Link href="/" className="text-slate-300 hover:text-white">
               Home
-            </a>
-            <a
-              href="/login"
-              className="rounded px-2 py-1 text-slate-300 hover:bg-slate-800/70"
-            >
+            </Link>
+            <Link href="/login" className="text-slate-300 hover:text-white">
               Log in
-            </a>
-            <a
-              href="/register"
-              className="rounded px-2 py-1 text-slate-300 hover:bg-slate-800/70"
-            >
+            </Link>
+            <Link href="/register" className="text-slate-300 hover:text-white">
               Register
-            </a>
-            <a
-              href="/bg"
-              className="rounded px-2 py-1 text-slate-300 hover:bg-slate-800/70"
+            </Link>
+            <Link
+              href={dashboardHref}
+              className="rounded-full bg-indigo-500 px-3 py-1 text-[11px] font-semibold text-white hover:bg-indigo-400"
             >
               Member Dashboard
-            </a>
+            </Link>
           </nav>
         </div>
       </header>
 
-      <div className="mx-auto max-w-6xl px-4 py-6 space-y-8">
-        {/* HERO / MARKETING BLOCK */}
-        <section className="max-w-3xl space-y-4">
-          <p className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[10px] font-medium uppercase tracking-wide text-emerald-300">
-            Real estate · Remote oversight · On-demand photos
-          </p>
+      {/* MAIN */}
+      <main className="mx-auto max-w-5xl space-y-10 px-4 py-8">
+        {/* HERO */}
+        <section className="grid items-start gap-8 md:grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)]">
+          <div className="space-y-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-indigo-300">
+              Real estate · Remote oversight · On-demand photos
+            </p>
+            <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
+              Connect Investors with Boots on the Ground.
+            </h1>
+            <p className="max-w-xl text-sm leading-relaxed text-slate-300">
+              ProveForMe allows remote investors to securely hire trusted local
+              people to act as their boots on the ground.
+            </p>
 
-          <h2 className="text-2xl font-semibold leading-tight tracking-tight md:text-3xl">
-            Connect{" "}
-            <span className="text-emerald-400">Investors</span> with{" "}
-            <span className="text-emerald-400">Boots on the Ground</span>.
-          </h2>
+            <div className="flex flex-wrap gap-3 pt-1 text-xs">
+              <Link
+                href="/register"
+                className="rounded-md bg-indigo-500 px-3 py-2 font-semibold hover:bg-indigo-400"
+              >
+                Become a member
+              </Link>
+              <Link
+                href="/login"
+                className="rounded-md border border-slate-700 px-3 py-2 font-medium text-slate-100 hover:border-slate-500"
+              >
+                Log in to dashboard
+              </Link>
+              {authUser && (
+                <Link
+                  href={dashboardHref}
+                  className="rounded-md border border-emerald-600 px-3 py-2 font-semibold text-emerald-100 hover:border-emerald-400"
+                >
+                  {authUser.role === "INVESTOR"
+                    ? "Go to investor dashboard"
+                    : "Go to BG dashboard"}
+                </Link>
+              )}
+            </div>
 
-          <p className="max-w-xl text-sm text-slate-300">
-            ProveForMe allows remote investors to securely hire trusted local
-            people to act as their boots on the ground.
-          </p>
-
-          {/* Auth-aware CTA strip */}
-          <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-4 space-y-3">
-            {authChecked && authUser ? (
-              <div className="space-y-2">
-                <p className="text-xs text-emerald-300">
+            {/* AUTH BANNER */}
+            <div className="mt-4 rounded-md border border-emerald-700/70 bg-emerald-950/40 px-3 py-2 text-xs text-emerald-100">
+              {authUser ? (
+                <p>
                   You&apos;re logged in as{" "}
                   <span className="font-semibold">
-                    {fullName || authUser.email}
+                    {(authUser.firstName || "").trim()}{" "}
+                    {(authUser.lastName || "").trim()}
                   </span>{" "}
-                  ({authUser.role === "INVESTOR" ? "Investor" : "BG / Prover"}).
+                  (
+                  {authUser.role === "INVESTOR"
+                    ? "Investor"
+                    : "BG / Prover"}
+                  ).{" "}
+                  <span className="ml-1">
+                    View your{" "}
+                    <Link
+                      href={dashboardHref}
+                      className="underline underline-offset-2 hover:text-emerald-200"
+                    >
+                      member dashboard
+                    </Link>
+                    .
+                  </span>
                 </p>
-
-                {authUser.role === "INVESTOR" ? (
-                  <div className="flex flex-wrap gap-3 text-xs">
-                    <a
-                      href="/"
-                      className="rounded-lg bg-emerald-500 px-3 py-2 font-medium text-slate-950 hover:bg-emerald-400"
-                    >
-                      Go to investor dashboard
-                    </a>
-                    <a
-                      href="/bg"
-                      className="rounded-lg border border-slate-700 px-3 py-2 text-slate-200 hover:bg-slate-800/70"
-                    >
-                      View Member Dashboard
-                    </a>
-                  </div>
-                ) : (
-                  <div className="flex flex-wrap gap-3 text-xs">
-                    <a
-                      href="/bg"
-                      className="rounded-lg bg-emerald-500 px-3 py-2 font-medium text-slate-950 hover:bg-emerald-400"
-                    >
-                      Go to Member Dashboard
-                    </a>
-                    <a
-                      href="/"
-                      className="rounded-lg border border-slate-700 px-3 py-2 text-slate-200 hover:bg-slate-800/70"
-                    >
-                      Back to home
-                    </a>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <p className="text-xs text-slate-300">
-                  Get started by choosing how you use ProveForMe:
-                </p>
-                <div className="flex flex-wrap gap-3 text-xs">
-                  <a
-                    href="/register?role=investor"
-                    className="rounded-lg bg-emerald-500 px-3 py-2 font-medium text-slate-950 hover:bg-emerald-400"
-                  >
-                    I&apos;m an Investor
-                  </a>
-                  <a
-                    href="/register?role=bg"
-                    className="rounded-lg border border-slate-700 px-3 py-2 text-slate-200 hover:bg-slate-800/70"
-                  >
-                    I&apos;m a Prover
-                  </a>
-                  <a
+              ) : (
+                <p>
+                  You&apos;re viewing the public homepage. Use{" "}
+                  <Link
                     href="/login"
-                    className="rounded-lg border border-slate-700 px-3 py-2 text-slate-300 hover:bg-slate-800/70"
+                    className="underline underline-offset-2 hover:text-emerald-200"
                   >
-                    I already have an account
-                  </a>
-                </div>
-              </div>
-            )}
+                    Log in
+                  </Link>{" "}
+                  to access investor or BG tools.
+                </p>
+              )}
+            </div>
           </div>
 
-          {/* Three small feature bullets */}
-          <div className="grid gap-4 text-[11px] text-slate-300 sm:grid-cols-3">
-            <div className="space-y-1">
-              <p className="font-semibold text-slate-100">
-                Verified work visits
-              </p>
-              <p className="text-slate-400">
-                Each visit logs photos, timestamps, and a trail the investor can
-                review.
-              </p>
-            </div>
-            <div className="space-y-1">
-              <p className="font-semibold text-slate-100">
-                No phone numbers exposed
-              </p>
-              <p className="text-slate-400">
-                Investors and Provers coordinate through our secure platform
-                ensuring safety and fairness for all members.
-              </p>
-            </div>
-            <div className="space-y-1">
-              <p className="font-semibold text-slate-100">Nationwide-ready</p>
-              <p className="text-slate-400">
-                Currently expanding from Texas, into multiple markets as our
-                network of Provers increases.
-              </p>
-            </div>
+          {/* MEMBER AREA EXPLANATION */}
+          <div className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/40 p-4 text-xs">
+            <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-300">
+              Member area
+            </p>
+            <p className="leading-relaxed text-slate-300">
+              You&apos;re viewing the public homepage. Your main investor tools
+              live in the Member Dashboard and related authenticated screens as
+              we keep polishing, but the core flows are already live.
+            </p>
+            <ul className="space-y-1 list-disc pl-4 text-slate-300">
+              <li>Create projects and set pay-per-visit.</li>
+              <li>Approve or invite local BGs / Provers.</li>
+              <li>Review visit photos, timestamps, and status updates.</li>
+            </ul>
           </div>
         </section>
 
-        {/* Auth-aware small dashboard summary area */}
-        {authChecked && authUser && (
-          <section className="mt-4 rounded-xl border border-slate-800 bg-slate-900/80 p-4 space-y-3">
-            <p className="text-xs font-semibold text-slate-200">Member area</p>
+        {/* FEATURES */}
+        <section className="grid gap-4 text-xs md:grid-cols-3">
+          <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
+            <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-indigo-300">
+              Verified work visits
+            </p>
+            <p className="text-slate-300">
+              Each visit logs photos, timestamps, and a trail you can review
+              later, so you can see real progress without being on-site.
+            </p>
+          </div>
+          <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
+            <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-indigo-300">
+              Secure coordination
+            </p>
+            <p className="text-slate-300">
+              Investors and Provers coordinate through our secure platform
+              ensuring safety and fairness for all members.
+            </p>
+          </div>
+          <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
+            <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-indigo-300">
+              Nationwide-ready
+            </p>
+            <p className="text-slate-300">
+              Currently expanding from Texas into multiple markets as our
+              network of Provers increases.
+            </p>
+          </div>
+        </section>
+      </main>
 
-            {authUser.role === "INVESTOR" ? (
-              <p className="text-[11px] text-slate-300">
-                You&apos;re viewing the public homepage. Your main investor
-                tools live here and in the Member Dashboard as we continue
-                polishing, but you can already manage projects, assign BGs, and
-                review visits from this app.
-              </p>
-            ) : (
-              <p className="text-[11px] text-slate-300">
-                As a BG / Prover, your main workspace is the{" "}
-                <a
-                  href="/bg"
-                  className="text-emerald-300 underline-offset-2 hover:underline"
-                >
-                  Member Dashboard
-                </a>
-                . That&apos;s where you&apos;ll see assigned projects, create
-                visit logs, and upload photos.
-              </p>
-            )}
-          </section>
-        )}
-
-        <footer className="mt-6 border-t border-slate-900 pt-4 text-[10px] text-slate-500">
+      {/* FOOTER */}
+      <footer className="border-t border-slate-800 bg-slate-950/90">
+        <div className="mx-auto flex max-w-5xl flex-col gap-1 px-4 py-4 text-[11px] text-slate-400 md:flex-row md:items-center md:justify-between">
           <p>
             ProveForMe · Commission-based platform connecting remote investors
             with local &quot;Boots on the Ground&quot; (Provers). All names and
             example projects in this environment are test data.
           </p>
-          {health && (
-            <p className="mt-1 text-[10px] text-slate-600">
-              Backend status: {health.status} — {health.message}
-            </p>
-          )}
-          {healthError && !health && (
-            <p className="mt-1 text-[10px] text-red-500">
-              Backend status check: {healthError}
-            </p>
-          )}
-        </footer>
-      </div>
-    </main>
+          <p>
+            Backend status:{" "}
+            {backendError
+              ? `error — ${backendError}`
+              : backendHealth?.ok
+              ? `ok — ${
+                  backendHealth.message || "ProveForMe backend is alive"
+                }`
+              : "checking..."}
+          </p>
+        </div>
+      </footer>
+    </div>
   );
 }
