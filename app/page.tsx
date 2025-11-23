@@ -114,16 +114,17 @@ export default function Home() {
                   (
                   {authUser.role === "INVESTOR" ? "Investor" : "BG / Prover"}
                   ).{" "}
-                  <span className="ml-1">
-                    Go to{" "}
-                    <Link
-                      href={dashboardHref}
-                      className="underline underline-offset-2 hover:text-emerald-200"
-                    >
-                      your dashboard
-                    </Link>
-                    .
-                  </span>
+                <span className="ml-1">
+  Go to{" "}
+  <Link
+    href={dashboardHref}
+    className="underline underline-offset-2 hover:text-emerald-200"
+  >
+    your dashboard
+  </Link>
+  .
+</span>
+
                 </p>
               ) : (
                 <p>
