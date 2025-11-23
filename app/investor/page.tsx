@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
@@ -76,7 +77,7 @@ export default function InvestorDashboard() {
           data = await res.json();
         } catch (jsonErr) {
           console.error("Failed to parse projects response as JSON", jsonErr);
-          setError("Projects endpoint returned a non-JSON response.");
+          setError("Projects endpoint returned a non JSON response.");
           setLoading(false);
           return;
         }
@@ -146,13 +147,22 @@ export default function InvestorDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 p-8 space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Investor Dashboard
-        </h1>
-        <p className="text-xs text-slate-300">
-          Welcome {displayName || user.email}
-        </p>
+      <header className="flex items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Investor Dashboard
+          </h1>
+          <p className="text-xs text-slate-300">
+            Welcome {displayName || user.email}
+          </p>
+        </div>
+
+        <Link
+          href="/investor/projects/create"
+          className="rounded-md bg-indigo-500 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-400 border border-indigo-400"
+        >
+          + Create project
+        </Link>
       </header>
 
       <section className="space-y-3">
