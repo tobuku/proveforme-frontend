@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { AuthedHeader } from "../../components/AuthedHeader";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
@@ -108,35 +109,47 @@ export default function InvestorDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-50 p-8 text-sm">
-        Loading dashboard…
+      <div className="min-h-screen bg-slate-950 text-slate-50">
+        <AuthedHeader role={null} />
+        <main className="mx-auto max-w-5xl p-8 text-sm">
+          Loading dashboard…
+        </main>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-50 p-8 text-sm">
-        <h1 className="text-xl font-semibold mb-3">Investor Dashboard</h1>
-        <p className="text-red-400 text-sm">Error: {error}</p>
+      <div className="min-h-screen bg-slate-950 text-slate-50">
+        <AuthedHeader role={user?.role ?? null} />
+        <main className="mx-auto max-w-5xl p-8 text-sm">
+          <h1 className="text-xl font-semibold mb-3">Investor Dashboard</h1>
+          <p className="text-red-400 text-sm">Error: {error}</p>
+        </main>
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-50 p-8 text-sm">
-        <p>Not logged in.</p>
+      <div className="min-h-screen bg-slate-950 text-slate-50">
+        <AuthedHeader role={null} />
+        <main className="mx-auto max-w-5xl p-8 text-sm">
+          <p>Not logged in.</p>
+        </main>
       </div>
     );
   }
 
   if (user.role !== "INVESTOR") {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-50 p-8 text-sm">
-        <p className="text-red-400">
-          Access denied. This dashboard is for investors only.
-        </p>
+      <div className="min-h-screen bg-slate-950 text-slate-50">
+        <AuthedHeader role={user.role} />
+        <main className="mx-auto max-w-5xl p-8 text-sm">
+          <p className="text-red-400">
+            Access denied. This dashboard is for investors only.
+          </p>
+        </main>
       </div>
     );
   }
@@ -146,60 +159,64 @@ export default function InvestorDashboard() {
     (user.lastName ? " " + (user.lastName || "").trim() : "");
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 p-8 space-y-6">
-      <header className="flex items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Investor Dashboard
-          </h1>
-          <p className="text-xs text-slate-300">
-            Welcome {displayName || user.email}
-          </p>
-        </div>
+    <div className="min-h-screen bg-slate-950 text-slate-50">
+      <AuthedHeader role={user.role} />
 
-        <Link
-          href="/investor/projects/create"
-          className="rounded-md bg-indigo-500 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-400 border border-indigo-400"
-        >
-          + Create project
-        </Link>
-      </header>
-
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-slate-100">
-          Your projects
-        </h2>
-
-        {projects.length === 0 ? (
-          <p className="text-sm text-slate-400">
-            You have no projects yet. Once you create a project, it will appear
-            here.
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {projects.map((p) => (
-              <div
-                key={p.id}
-                className="rounded-md border border-slate-800 bg-slate-900/40 p-4 text-sm"
-              >
-                <p className="font-semibold text-slate-50">
-                  {p.title || "Untitled project"}
-                </p>
-                <p className="text-xs text-slate-400">
-                  {p.city}, {p.state}
-                </p>
-                <p className="text-xs mt-1 text-slate-300">
-                  Pay per visit:{" "}
-                  <span className="font-semibold">${p.payPerVisit}</span>
-                </p>
-                <p className="text-[11px] text-slate-500 mt-1">
-                  Created: {new Date(p.createdAt).toLocaleString()}
-                </p>
-              </div>
-            ))}
+      <main className="mx-auto max-w-5xl p-8 space-y-6">
+        <header className="flex items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Investor Dashboard
+            </h1>
+            <p className="text-xs text-slate-300">
+              Welcome {displayName || user.email}
+            </p>
           </div>
-        )}
-      </section>
+
+          <Link
+            href="/investor/projects/create"
+            className="rounded-md bg-indigo-500 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-400 border border-indigo-400"
+          >
+            + Create project
+          </Link>
+        </header>
+
+        <section className="space-y-3">
+          <h2 className="text-sm font-semibold text-slate-100">
+            Your projects
+          </h2>
+
+          {projects.length === 0 ? (
+            <p className="text-sm text-slate-400">
+              You have no projects yet. Once you create a project, it will
+              appear here.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {projects.map((p) => (
+                <div
+                  key={p.id}
+                  className="rounded-md border border-slate-800 bg-slate-900/40 p-4 text-sm"
+                >
+                  <p className="font-semibold text-slate-50">
+                    {p.title || "Untitled project"}
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    {p.city}, {p.state}
+                  </p>
+                  <p className="text-xs mt-1 text-slate-300">
+                    Pay per visit:{" "}
+                    <span className="font-semibold">${p.payPerVisit}</span>
+                  </p>
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Created: {new Date(p.createdAt).toLocaleString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      </main>
     </div>
   );
 }

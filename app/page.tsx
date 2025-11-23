@@ -24,7 +24,7 @@ export default function Home() {
   const [backendError, setBackendError] = useState<string | null>(null);
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
 
-  // Backend health check
+  // Backend health check only
   useEffect(() => {
     fetch(`${API_BASE}/api/v1/health`)
       .then(async (res) => {
@@ -63,9 +63,7 @@ export default function Home() {
     }
   }, []);
 
-  // IMPORTANT: Investor -> /investor, BG -> /bg
-  const dashboardHref =
-    authUser?.role === "BG" ? "/bg" : "/investor";
+  const dashboardHref = authUser?.role === "BG" ? "/bg" : "/";
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50">
@@ -132,16 +130,6 @@ export default function Home() {
               >
                 Log in to dashboard
               </Link>
-              {authUser && (
-                <Link
-                  href={dashboardHref}
-                  className="rounded-md border border-emerald-600 px-3 py-2 font-semibold text-emerald-100 hover:border-emerald-400"
-                >
-                  {authUser.role === "INVESTOR"
-                    ? "Go to investor dashboard"
-                    : "Go to BG dashboard"}
-                </Link>
-              )}
             </div>
 
             {/* AUTH BANNER */}
@@ -159,12 +147,12 @@ export default function Home() {
                     : "BG / Prover"}
                   ).{" "}
                   <span className="ml-1">
-                    View your{" "}
+                    Go to{" "}
                     <Link
                       href={dashboardHref}
                       className="underline underline-offset-2 hover:text-emerald-200"
                     >
-                      member dashboard
+                      your dashboard
                     </Link>
                     .
                   </span>
@@ -191,12 +179,12 @@ export default function Home() {
             </p>
             <p className="leading-relaxed text-slate-300">
               You&apos;re viewing the public homepage. Your main investor tools
-              live in the Member Dashboard and related authenticated screens as
-              we keep polishing, but the core flows are already live.
+              live on this dashboard and in other authenticated screens as we
+              keep polishing, but the core flows are already live.
             </p>
             <ul className="space-y-1 list-disc pl-4 text-slate-300">
               <li>Create projects and set pay-per-visit.</li>
-              <li>Approve or invite local BGs / Provers.</li>
+              <li>Invite or assign local BGs / Provers.</li>
               <li>Review visit photos, timestamps, and status updates.</li>
             </ul>
           </div>

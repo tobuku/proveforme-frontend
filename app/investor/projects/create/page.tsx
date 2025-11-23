@@ -1,13 +1,23 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { AuthedHeader } from "../../../../components/AuthedHeader";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
 
+type AuthUser = {
+  id: string;
+  email: string;
+  role: "INVESTOR" | "BG";
+  firstName?: string | null;
+  lastName?: string | null;
+};
+
 export default function CreateProjectPage() {
   const router = useRouter();
+  const [user, setUser] = useState<AuthUser | null>(null);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -17,6 +27,18 @@ export default function CreateProjectPage() {
   const [payPerVisit, setPayPerVisit] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const rawUser = localStorage.getItem("pfm_user");
+      if (rawUser) {
+        const parsed = JSON.parse(rawUser);
+        setUser(parsed);
+      }
+    } catch (err) {
+      console.error("Failed to read user from storage", err);
+    }
+  }, []);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -69,14 +91,12 @@ export default function CreateProjectPage() {
 
       if (!res.ok || !data.ok) {
         setError(
-          data?.error ||
-            `Create project failed (status ${res.status}).`
+          data?.error || `Create project failed (status ${res.status}).`
         );
         setSubmitting(false);
         return;
       }
 
-      // Success, go back to investor dashboard
       router.push("/investor");
     } catch (err) {
       console.error("Network error creating project", err);
@@ -86,8 +106,10 @@ export default function CreateProjectPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 p-8">
-      <div className="mx-auto max-w-xl space-y-6">
+    <div className="min-h-screen bg-slate-950 text-slate-50">
+      <AuthedHeader role={user?.role ?? null} />
+
+      <main className="mx-auto max-w-xl p-8 space-y-6">
         <header className="space-y-2">
           <h1 className="text-2xl font-semibold tracking-tight">
             Create new project
@@ -130,7 +152,7 @@ export default function CreateProjectPage() {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <div className="space-y-1">
               <label className="block text-xs font-semibold text-slate-200">
                 City *
@@ -198,13 +220,13 @@ export default function CreateProjectPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-md bg-indigo-500 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-400 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="rounded-md bg-indigo-500 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting ? "Creating..." : "Create project"}
             </button>
           </div>
         </form>
-      </div>
+      </main>
     </div>
   );
 }
