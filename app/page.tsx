@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { AuthedHeader } from "../components/AuthedHeader";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
@@ -24,7 +25,7 @@ export default function Home() {
   const [backendError, setBackendError] = useState<string | null>(null);
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
 
-  // Backend health check only
+  // Backend health check
   useEffect(() => {
     fetch(`${API_BASE}/api/v1/health`)
       .then(async (res) => {
@@ -63,43 +64,12 @@ export default function Home() {
     }
   }, []);
 
-  const dashboardHref = authUser?.role === "BG" ? "/bg" : "/";
+  const dashboardHref = authUser?.role === "BG" ? "/bg" : "/investor";
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50">
-      {/* HEADER / NAV */}
-      <header className="border-b border-slate-800 bg-slate-950/90 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="rounded-md bg-indigo-500 px-2 py-1 text-xs font-semibold tracking-wide">
-              PFM
-            </span>
-            <div className="leading-tight">
-              <p className="text-sm font-semibold">ProveForMe</p>
-              <p className="text-[10px] text-slate-400">
-                Local eyes for remote investors.
-              </p>
-            </div>
-          </Link>
-          <nav className="flex items-center gap-4 text-xs">
-            <Link href="/" className="text-slate-300 hover:text-white">
-              Home
-            </Link>
-            <Link href="/login" className="text-slate-300 hover:text-white">
-              Log in
-            </Link>
-            <Link href="/register" className="text-slate-300 hover:text-white">
-              Register
-            </Link>
-            <Link
-              href={dashboardHref}
-              className="rounded-full bg-indigo-500 px-3 py-1 text-[11px] font-semibold text-white hover:bg-indigo-400"
-            >
-              Member Dashboard
-            </Link>
-          </nav>
-        </div>
-      </header>
+      {/* Global header with logo, role aware nav, and logout */}
+      <AuthedHeader role={authUser?.role ?? null} />
 
       {/* MAIN */}
       <main className="mx-auto max-w-5xl space-y-10 px-4 py-8">
@@ -107,10 +77,10 @@ export default function Home() {
         <section className="grid items-start gap-8 md:grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)]">
           <div className="space-y-4">
             <p className="text-xs uppercase tracking-[0.2em] text-indigo-300">
-              Real estate · Remote oversight · On-demand photos
+              Real estate · Remote oversight · On demand photos
             </p>
             <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-              Connect Investors with Boots on the Ground.
+              Connect investors with Boots on the Ground.
             </h1>
             <p className="max-w-xl text-sm leading-relaxed text-slate-300">
               ProveForMe allows remote investors to securely hire trusted local
@@ -142,9 +112,7 @@ export default function Home() {
                     {(authUser.lastName || "").trim()}
                   </span>{" "}
                   (
-                  {authUser.role === "INVESTOR"
-                    ? "Investor"
-                    : "BG / Prover"}
+                  {authUser.role === "INVESTOR" ? "Investor" : "BG / Prover"}
                   ).{" "}
                   <span className="ml-1">
                     Go to{" "}
@@ -179,12 +147,12 @@ export default function Home() {
             </p>
             <p className="leading-relaxed text-slate-300">
               You&apos;re viewing the public homepage. Your main investor tools
-              live on this dashboard and in other authenticated screens as we
+              live on your dashboard and in other authenticated screens as we
               keep polishing, but the core flows are already live.
             </p>
             <ul className="space-y-1 list-disc pl-4 text-slate-300">
-              <li>Create projects and set pay-per-visit.</li>
-              <li>Invite or assign local BGs / Provers.</li>
+              <li>Create projects and set pay per visit.</li>
+              <li>Approve or invite local BGs / Provers.</li>
               <li>Review visit photos, timestamps, and status updates.</li>
             </ul>
           </div>
@@ -198,7 +166,7 @@ export default function Home() {
             </p>
             <p className="text-slate-300">
               Each visit logs photos, timestamps, and a trail you can review
-              later, so you can see real progress without being on-site.
+              later, so you can see real progress without being on site.
             </p>
           </div>
           <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
@@ -206,17 +174,17 @@ export default function Home() {
               Secure coordination
             </p>
             <p className="text-slate-300">
-              Investors and Provers coordinate through our secure platform
-              ensuring safety and fairness for all members.
+              Investors and Provers coordinate through our secure platform,
+              helping protect both sides and giving everyone clarity.
             </p>
           </div>
           <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
             <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-indigo-300">
-              Nationwide-ready
+              Nationwide ready
             </p>
             <p className="text-slate-300">
-              Currently expanding from Texas into multiple markets as our
-              network of Provers increases.
+              Expanding from Texas into multiple markets as our network of
+              Provers increases.
             </p>
           </div>
         </section>
@@ -226,16 +194,16 @@ export default function Home() {
       <footer className="border-t border-slate-800 bg-slate-950/90">
         <div className="mx-auto flex max-w-5xl flex-col gap-1 px-4 py-4 text-[11px] text-slate-400 md:flex-row md:items-center md:justify-between">
           <p>
-            ProveForMe · Commission-based platform connecting remote investors
+            ProveForMe · Commission based platform connecting remote investors
             with local &quot;Boots on the Ground&quot; (Provers). All names and
             example projects in this environment are test data.
           </p>
           <p>
             Backend status:{" "}
             {backendError
-              ? `error — ${backendError}`
+              ? `error: ${backendError}`
               : backendHealth?.ok
-              ? `ok — ${
+              ? `ok: ${
                   backendHealth.message || "ProveForMe backend is alive"
                 }`
               : "checking..."}
