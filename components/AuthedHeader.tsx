@@ -8,35 +8,67 @@ import { useEffect, useState } from "react";
 type UserRole = "INVESTOR" | "BG" | null;
 
 type AuthedHeaderProps = {
-  role: UserRole;
+  /**
+   * Optional role passed in from a page that already knows the user role.
+   * If not provided, the header will fall back to reading pfm_role itself.
+   */
+  role?: UserRole;
 };
 
-export function AuthedHeader({ role }: AuthedHeaderProps) {
+export function AuthedHeader({ role: propRole }: AuthedHeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [isClient, setIsClient] = useState(false);
 
+  const [role, setRole] = useState<UserRole>(propRole ?? null);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Keep internal role in sync with propRole or localStorage
   useEffect(() => {
-    setIsClient(true);
-  }, []);
+    try {
+      if (propRole) {
+        setRole(propRole);
+        return;
+      }
+
+      if (typeof window === "undefined") return;
+
+      const storedRole = localStorage.getItem("pfm_role");
+      if (storedRole === "INVESTOR" || storedRole === "BG") {
+        setRole(storedRole);
+      } else {
+        setRole(null);
+      }
+    } catch (err) {
+      console.error("Error reading role from storage in AuthedHeader", err);
+      setRole(null);
+    }
+  }, [propRole]);
 
   function handleLogout() {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("pfm_token");
-      localStorage.removeItem("pfm_user");
-      localStorage.removeItem("pfm_role");
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("pfm_token");
+        localStorage.removeItem("pfm_user");
+        localStorage.removeItem("pfm_role");
+      }
+    } catch (err) {
+      console.error("Error clearing auth storage on logout", err);
     }
     router.push("/login");
   }
 
-  const navItems = [
-    { href: "/", label: "Home" },
-    role === "INVESTOR"
-      ? { href: "/investor", label: "Investor dashboard" }
-      : null,
-    role === "BG" ? { href: "/bg", label: "BG dashboard" } : null,
-  ].filter(Boolean) as { href: string; label: string }[];
+  const navItems: { href: string; label: string }[] = [{ href: "/", label: "Home" }];
+
+  if (role === "INVESTOR") {
+    navItems.push({ href: "/investor", label: "Investor dashboard" });
+  } else if (role === "BG") {
+    navItems.push({ href: "/bg", label: "BG dashboard" });
+  } else {
+    navItems.push({ href: "/login", label: "Log in" });
+    navItems.push({ href: "/register", label: "Register" });
+  }
+
+  const showLogout = role === "INVESTOR" || role === "BG";
 
   return (
     <header className="border-b border-slate-800 bg-slate-950/90 backdrop-blur">
@@ -73,7 +105,8 @@ export function AuthedHeader({ role }: AuthedHeaderProps) {
               {item.label}
             </Link>
           ))}
-          {isClient && (
+
+          {showLogout && (
             <button
               onClick={handleLogout}
               className="rounded-full border border-slate-600 px-3 py-1 text-[11px] font-semibold text-slate-100 hover:border-slate-400"
@@ -116,7 +149,8 @@ export function AuthedHeader({ role }: AuthedHeaderProps) {
                 {item.label}
               </Link>
             ))}
-            {isClient && (
+
+            {showLogout && (
               <button
                 onClick={() => {
                   setMenuOpen(false);
