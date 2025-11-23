@@ -2,102 +2,113 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AuthedHeader } from "../../components/AuthedHeader";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
 
-type Project = {
-  id: string;
-  title: string;
-  description?: string;
-  city: string;
-  state: string;
-  payPerVisit: string;
-  createdAt: string;
-};
-
 type AuthUser = {
   id: string;
   email: string;
-  role: "INVESTOR" | "BG";
   firstName?: string | null;
   lastName?: string | null;
+  role: "INVESTOR" | "BG";
 };
 
-export default function InvestorDashboard() {
-  const [user, setUser] = useState<AuthUser | null>(null);
+type Project = {
+  id: string;
+  title: string;
+  description: string | null;
+  city: string;
+  state: string;
+  payPerVisit: string;
+  status?: string | null;
+  createdAt?: string;
+};
+
+type ProjectsResponse = {
+  ok: boolean;
+  projects?: Project[];
+  error?: string;
+};
+
+export default function InvestorDashboardPage() {
+  const router = useRouter();
+
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load user from localStorage
+  // Read auth from localStorage and guard route
   useEffect(() => {
     try {
+      if (typeof window === "undefined") return;
+
       const token = localStorage.getItem("pfm_token");
       const rawUser = localStorage.getItem("pfm_user");
 
       if (!token || !rawUser) {
-        setError("Not logged in.");
-        setLoading(false);
+        router.replace("/login");
         return;
       }
 
-      const parsed = JSON.parse(rawUser);
-      setUser(parsed);
-    } catch (e) {
-      console.error("Failed to load auth info", e);
-      setError("Failed to load auth info.");
-      setLoading(false);
-    }
-  }, []);
+      const parsed = JSON.parse(rawUser) as AuthUser;
+      if (parsed.role !== "INVESTOR") {
+        router.replace("/login");
+        return;
+      }
 
-  // Load investor projects
+      setAuthUser(parsed);
+    } catch (err) {
+      console.error("Error reading auth in investor dashboard", err);
+      router.replace("/login");
+    }
+  }, [router]);
+
+  // Load projects for this investor
   useEffect(() => {
     async function loadProjects() {
+      if (typeof window === "undefined") return;
+
+      const token = localStorage.getItem("pfm_token");
+      if (!token) {
+        setLoading(false);
+        setError("Missing auth token. Please log in again.");
+        return;
+      }
+
       try {
-        const token = localStorage.getItem("pfm_token");
-        if (!token) {
-          setError("Missing auth token.");
-          setLoading(false);
-          return;
-        }
-
-        const url = `${API_BASE}/api/v1/investor/projects/my`;
-        console.log("Fetching investor projects from:", url);
-
-        const res = await fetch(url, {
+        const res = await fetch(`${API_BASE}/api/v1/projects`, {
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
         });
 
-        let data: any = null;
+        let data: ProjectsResponse;
         try {
-          data = await res.json();
+          data = (await res.json()) as ProjectsResponse;
         } catch (jsonErr) {
-          console.error("Failed to parse projects response as JSON", jsonErr);
-          setError("Projects endpoint returned a non JSON response.");
+          console.error("Failed to parse projects response", jsonErr);
+          setError("Failed to load projects (invalid server response).");
           setLoading(false);
           return;
         }
 
-        console.log("Projects response:", res.status, data);
-
-        if (!res.ok || !data.ok) {
-          setError(
-            data?.error ||
-              `Failed to load projects (status ${res.status}).`
-          );
+        if (!res.ok || !data.ok || !data.projects) {
+          const message =
+            data.error ||
+            `Failed to load projects (status ${res.status}).`;
+          setError(message);
           setLoading(false);
           return;
         }
 
-        setProjects(Array.isArray(data.projects) ? data.projects : []);
+        setProjects(data.projects);
         setError(null);
       } catch (err) {
-        console.error("Network error while loading projects", err);
+        console.error("Network error loading projects", err);
         setError("Network error loading projects.");
       } finally {
         setLoading(false);
@@ -107,110 +118,93 @@ export default function InvestorDashboard() {
     loadProjects();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-950 text-slate-50">
-        <AuthedHeader role={null} />
-        <main className="mx-auto max-w-5xl p-8 text-sm">
-          Loading dashboard…
-        </main>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-slate-950 text-slate-50">
-        <AuthedHeader role={user?.role ?? null} />
-        <main className="mx-auto max-w-5xl p-8 text-sm">
-          <h1 className="text-xl font-semibold mb-3">Investor Dashboard</h1>
-          <p className="text-red-400 text-sm">Error: {error}</p>
-        </main>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-slate-950 text-slate-50">
-        <AuthedHeader role={null} />
-        <main className="mx-auto max-w-5xl p-8 text-sm">
-          <p>Not logged in.</p>
-        </main>
-      </div>
-    );
-  }
-
-  if (user.role !== "INVESTOR") {
-    return (
-      <div className="min-h-screen bg-slate-950 text-slate-50">
-        <AuthedHeader role={user.role} />
-        <main className="mx-auto max-w-5xl p-8 text-sm">
-          <p className="text-red-400">
-            Access denied. This dashboard is for investors only.
-          </p>
-        </main>
-      </div>
-    );
-  }
-
-  const displayName =
-    (user.firstName || "").trim() +
-    (user.lastName ? " " + (user.lastName || "").trim() : "");
+  const firstName = (authUser?.firstName || "").trim() || "Investor";
+  const lastName = (authUser?.lastName || "").trim() || "";
 
   return (
     <div className="pfm-shell">
-      <AuthedHeader role={user.role} />
+      <AuthedHeader role={authUser?.role ?? "INVESTOR"} />
 
-      <main className="mx-auto max-w-5xl p-8 space-y-6">
-        <header className="flex items-center justify-between gap-4">
-          <div className="space-y-1">
-            <h1 className="text-2xl font-semibold tracking-tight">
+      <main className="mx-auto max-w-5xl px-4 py-8 text-sm">
+        <div className="mb-6 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-indigo-500 dark:text-indigo-300">
               Investor Dashboard
+            </p>
+            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">
+              Welcome {firstName} {lastName}
             </h1>
-            <p className="text-xs text-slate-300">
-              Welcome {displayName || user.email}
+            <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+              Create projects, assign Boots on the Ground, and review visit
+              activity from one place.
             </p>
           </div>
 
           <Link
             href="/investor/projects/create"
-            className="rounded-md bg-indigo-500 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-400 border border-indigo-400"
+            className="inline-flex items-center gap-1 rounded-md bg-indigo-500 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-400"
           >
-            + Create project
+            <span>+ Create project</span>
           </Link>
-        </header>
+        </div>
 
         <section className="space-y-3">
-          <h2 className="text-sm font-semibold text-slate-100">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
             Your projects
           </h2>
 
-          {projects.length === 0 ? (
-            <p className="text-sm text-slate-400">
+          {loading && (
+            <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-300">
+              Loading projects...
+            </div>
+          )}
+
+          {!loading && error && (
+            <div className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-800 dark:border-red-700 dark:bg-red-950/40 dark:text-red-200">
+              {error}
+            </div>
+          )}
+
+          {!loading && !error && projects.length === 0 && (
+            <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-3 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-300">
               You have no projects yet. Once you create a project, it will
               appear here.
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {projects.map((p) => (
+            </div>
+          )}
+
+          {!loading && !error && projects.length > 0 && (
+            <div className="grid gap-3 md:grid-cols-2">
+              {projects.map((project) => (
                 <div
-                  key={p.id}
-                  className="rounded-md border border-slate-800 bg-slate-900/40 p-4 text-sm"
+                  key={project.id}
+                  className="flex flex-col justify-between rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-300"
                 >
-                  <p className="font-semibold text-slate-50">
-                    {p.title || "Untitled project"}
-                  </p>
-                  <p className="text-xs text-slate-400">
-                    {p.city}, {p.state}
-                  </p>
-                  <p className="text-xs mt-1 text-slate-300">
-                    Pay per visit:{" "}
-                    <span className="font-semibold">${p.payPerVisit}</span>
-                  </p>
-                  <p className="text-[11px] text-slate-500 mt-1">
-                    Created: {new Date(p.createdAt).toLocaleString()}
-                  </p>
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-500 dark:text-indigo-300">
+                      {project.city}, {project.state}
+                    </p>
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                      {project.title}
+                    </h3>
+                    {project.description && (
+                      <p className="text-[11px] text-slate-600 dark:text-slate-300">
+                        {project.description}
+                      </p>
+                    )}
+                  </div>
+                  <div className="mt-3 flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-300">
+                    <span>
+                      Pay per visit:{" "}
+                      <span className="font-semibold text-slate-900 dark:text-slate-50">
+                        ${project.payPerVisit}
+                      </span>
+                    </span>
+                    {project.status && (
+                      <span className="rounded-full border border-slate-300 px-2 py-0.5 text-[10px] uppercase tracking-wide text-slate-600 dark:border-slate-600 dark:text-slate-200">
+                        {project.status}
+                      </span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
