@@ -67,7 +67,7 @@ export default function Home() {
   const dashboardHref = authUser?.role === "BG" ? "/bg" : "/investor";
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50">
+    <div className="pfm-shell">
       {/* Global header with logo, role aware nav, and logout */}
       <AuthedHeader role={authUser?.role ?? null} />
 

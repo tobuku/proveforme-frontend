@@ -129,7 +129,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50">
+    <div className="pfm-shell">
       <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-8 text-sm">
         <div className="mb-6 text-center">
           <p className="text-xs uppercase tracking-[0.2em] text-indigo-300">
