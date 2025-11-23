@@ -1,267 +1,224 @@
 "use client";
 
-import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
 
-type AuthUser = {
-  id: string;
-  email: string;
-  role: "INVESTOR" | "BG";
-  firstName?: string | null;
-  lastName?: string | null;
+type LoginRole = "INVESTOR" | "BG";
+
+type LoginResponse = {
+  ok: boolean;
+  token?: string;
+  user?: {
+    id: string;
+    email: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    role: LoginRole;
+  };
+  error?: string;
 };
 
-type LoginResponse =
-  | {
-      ok: true;
-      token: string;
-      role?: "INVESTOR" | "BG";
-      user: AuthUser;
-    }
-  | {
-      ok: false;
-      error: string;
-    };
-
-// We now know register is at /api/v1/users/register
-// So first guesses for login are under /api/v1/users/*
-const LOGIN_ENDPOINTS = [
-  "/api/v1/users/login",
-  "/api/v1/users/sign-in",
-  "/api/v1/users/signin",
-  "/api/v1/auth/login",
-  "/api/v1/auth/sign-in",
-  "/api/v1/auth/signin",
-  "/api/auth/login",
-  "/auth/login",
-  "/api/v1/login",
-  "/api/login",
-];
-
 export default function LoginPage() {
+  const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+
+  // If already logged in, send them to their dashboard instead of making them log in again
+  useEffect(() => {
+    try {
+      const token =
+        typeof window !== "undefined"
+          ? localStorage.getItem("pfm_token")
+          : null;
+      const rawUser =
+        typeof window !== "undefined"
+          ? localStorage.getItem("pfm_user")
+          : null;
+
+      if (token && rawUser) {
+        const parsed = JSON.parse(rawUser) as { role?: LoginRole | null };
+        const role = parsed?.role;
+
+        if (role === "INVESTOR") {
+          router.replace("/investor");
+        } else if (role === "BG") {
+          router.replace("/bg");
+        } else {
+          // Unknown role, clear and let them log in fresh
+          localStorage.removeItem("pfm_token");
+          localStorage.removeItem("pfm_user");
+          localStorage.removeItem("pfm_role");
+        }
+      }
+    } catch (err) {
+      console.error("Error checking existing auth on login page", err);
+    }
+  }, [router]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    setSubmitting(true);
+    setInfo(null);
+
+    if (!email || !password) {
+      setError("Email and password are required.");
+      return;
+    }
+
+    setLoading(true);
 
     try {
-      let lastErrorMessage: string | null = null;
+      const res = await fetch(`${API_BASE}/api/v1/users/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-      for (const path of LOGIN_ENDPOINTS) {
-        const url = `${API_BASE}${path}`;
-        console.log("Trying login endpoint:", url);
-
-        try {
-          const res = await fetch(url, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ email, password }),
-          });
-
-          let data: any = null;
-          try {
-            data = await res.json();
-          } catch {
-            // ignore JSON parse errors, we'll fall back to generic message
-          }
-
-          if (res.status === 404) {
-            // Endpoint does not exist on this backend; try the next one
-            lastErrorMessage = `Login endpoint not found at ${path} (404).`;
-            continue;
-          }
-
-          if (!res.ok || !data || data.ok === false) {
-            const message =
-              data?.error ||
-              `Login failed at ${path} with status ${res.status}. Please check your email and password.`;
-            // Endpoint exists but rejected the login; no point trying others.
-            setError(message);
-            return;
-          }
-
-          const loginData = data as LoginResponse & {
-            token?: string;
-            user?: AuthUser;
-            role?: "INVESTOR" | "BG";
-          };
-
-          const token =
-            (loginData as any).token ||
-            (loginData as any).accessToken ||
-            (loginData as any).jwt;
-          const user =
-            (loginData as any).user || (loginData as any).data?.user || null;
-          const role =
-            (loginData as any).role ||
-            (user && (user as any).role) ||
-            "INVESTOR";
-
-          if (!token || !user) {
-            lastErrorMessage =
-              "Login response was missing required fields from backend.";
-            continue;
-          }
-
-          // Persist auth for homepage/dashboard
-          try {
-            localStorage.setItem("pfm_token", token);
-            localStorage.setItem("pfm_role", role);
-            localStorage.setItem("pfm_user", JSON.stringify(user));
-          } catch (storageErr) {
-            console.error("Failed to save auth info to localStorage", storageErr);
-          }
-
-          console.log("Login succeeded via endpoint:", path);
-
-          // Redirect based on role
-          if (role === "BG") {
-            window.location.href = "/bg";
-          } else {
-            window.location.href = "/";
-          }
-
-          return;
-        } catch (err: any) {
-          console.error("Network error while logging in via", path, err);
-          lastErrorMessage = `Network error: failed to reach the server at ${path}.`;
-          // try next endpoint
-          continue;
-        }
+      let data: LoginResponse;
+      try {
+        data = (await res.json()) as LoginResponse;
+      } catch (jsonErr) {
+        console.error("Failed to parse login response as JSON", jsonErr);
+        setError("Login failed: server did not return JSON.");
+        setLoading(false);
+        return;
       }
 
-      // If we got here, none of the endpoints worked
-      setError(
-        lastErrorMessage ||
-          "Unable to reach any login endpoint on the backend. Please try again later."
-      );
+      if (!res.ok || !data.ok || !data.token || !data.user) {
+        const message =
+          data.error ||
+          `Login failed with status ${res.status}. Please check your email and password.`;
+        setError(message);
+        setLoading(false);
+        return;
+      }
+
+      // Store auth in localStorage
+      try {
+        localStorage.setItem("pfm_token", data.token);
+        localStorage.setItem("pfm_user", JSON.stringify(data.user));
+        localStorage.setItem("pfm_role", data.user.role);
+      } catch (storageErr) {
+        console.error("Failed to write auth to storage", storageErr);
+      }
+
+      // Redirect based on role
+      if (data.user.role === "INVESTOR") {
+        router.replace("/investor");
+      } else if (data.user.role === "BG") {
+        router.replace("/bg");
+      } else {
+        // Fallback: go to homepage if an unknown role somehow appears
+        router.replace("/");
+      }
+    } catch (err) {
+      console.error("Network error during login", err);
+      setError("Network error while trying to log in. Please try again.");
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
   }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50">
-      {/* HEADER */}
-      <header className="border-b border-slate-800 bg-slate-950/90 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="rounded-md bg-indigo-500 px-2 py-1 text-xs font-semibold tracking-wide">
-              PFM
-            </span>
-            <div className="leading-tight">
-              <p className="text-sm font-semibold">ProveForMe</p>
-              <p className="text-[10px] text-slate-400">
-                Local eyes for remote investors.
-              </p>
-            </div>
-          </Link>
-          <nav className="flex items-center gap-4 text-xs">
-            <Link href="/" className="text-slate-300 hover:text-white">
-              Home
-            </Link>
-            <Link href="/register" className="text-slate-300 hover:text-white">
-              Register
-            </Link>
-          </nav>
-        </div>
-      </header>
-
-      {/* MAIN */}
-      <main className="mx-auto flex max-w-md flex-col gap-4 px-4 py-8">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight">
+      <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-8 text-sm">
+        <div className="mb-6 text-center">
+          <p className="text-xs uppercase tracking-[0.2em] text-indigo-300">
             ProveForMe Login
-          </h1>
-          <p className="mt-1 text-xs text-slate-300">
+          </p>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight">
             Securely access your member dashboard.
+          </h1>
+          <p className="mt-2 text-xs text-slate-300">
+            Use the same email and password you registered with. After login,
+            you will be sent directly to your Investor or BG dashboard.
           </p>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-4 rounded-lg border border-slate-800 bg-slate-900/40 p-4 text-sm"
-        >
-          <div className="space-y-1">
-            <label
-              htmlFor="email"
-              className="text-xs font-medium text-slate-200"
-            >
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              required
-              className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-slate-50 outline-none focus:border-indigo-400"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label
-              htmlFor="password"
-              className="text-xs font-medium text-slate-200"
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-slate-50 outline-none focus:border-indigo-400"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-
+        <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="rounded-md border border-amber-600/70 bg-amber-950/40 px-3 py-2 text-[11px] text-amber-100">
+            <div className="rounded-md border border-red-500 bg-red-950/40 px-3 py-2 text-xs text-red-200">
               {error}
             </div>
           )}
 
+          {info && (
+            <div className="rounded-md border border-emerald-500 bg-emerald-950/40 px-3 py-2 text-xs text-emerald-200">
+              {info}
+            </div>
+          )}
+
+          <div className="space-y-1">
+            <label className="block text-xs font-semibold text-slate-200">
+              Email
+            </label>
+            <input
+              type="email"
+              autoComplete="email"
+              className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none focus:border-indigo-400"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="block text-xs font-semibold text-slate-200">
+              Password
+            </label>
+            <input
+              type="password"
+              autoComplete="current-password"
+              className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none focus:border-indigo-400"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Your password"
+            />
+          </div>
+
           <button
             type="submit"
-            disabled={submitting}
-            className="flex w-full items-center justify-center rounded-md bg-indigo-500 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={loading}
+            className="mt-2 w-full rounded-md bg-indigo-500 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {submitting ? "Logging in..." : "Log in"}
+            {loading ? "Logging in..." : "Log in"}
           </button>
         </form>
 
-        <div className="flex justify-between text-[11px] text-slate-400">
-          <Link href="/" className="hover:text-slate-200">
+        <div className="mt-4 flex items-center justify-between text-[11px] text-slate-400">
+          <button
+            type="button"
+            onClick={() => router.push("/")}
+            className="hover:text-slate-100"
+          >
             ← Back to Homepage
-          </Link>
-          <div className="flex flex-col items-end gap-1">
-            <p>
-              Need an account?{" "}
-              <Link
-                href="/register"
-                className="font-medium text-indigo-300 hover:text-indigo-200"
-              >
-                Register
-              </Link>
-            </p>
-            <p className="text-[10px]">
-              Frontend → backend: {API_BASE}
-            </p>
-          </div>
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push("/register")}
+            className="hover:text-slate-100"
+          >
+            Need an account? Register
+          </button>
         </div>
+
+        <p className="mt-6 text-[10px] text-slate-500">
+          Frontend → backend: {API_BASE}
+        </p>
+        <p className="text-[10px] text-slate-500">
+          After login, valid sessions should go directly to your Investor or BG
+          dashboard without requiring repeated logins, as long as your token
+          remains valid.
+        </p>
       </main>
     </div>
   );
