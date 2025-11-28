@@ -27,9 +27,9 @@ type Project = {
   createdAt?: string;
 };
 
-type ProjectsResponse = {
+type LegacyProjectsEnvelope = {
   ok: boolean;
-  projects?: Project[];
+  projects?: any[];
   error?: string;
 };
 
@@ -86,26 +86,71 @@ export default function InvestorDashboardPage() {
           },
         });
 
-        let data: ProjectsResponse;
+        if (!res.ok) {
+          setError(`Failed to load projects (status ${res.status}).`);
+          setLoading(false);
+          return;
+        }
+
+        let raw: unknown;
         try {
-          data = (await res.json()) as ProjectsResponse;
+          raw = await res.json();
         } catch (jsonErr) {
           console.error("Failed to parse projects response", jsonErr);
-          setError("Failed to load projects (invalid server response).");
+          setError("Failed to load projects (invalid JSON from server).");
           setLoading(false);
           return;
         }
 
-        if (!res.ok || !data.ok || !data.projects) {
-          const message =
-            data.error ||
-            `Failed to load projects (status ${res.status}).`;
-          setError(message);
+        // Normalize backend shapes:
+        // 1) Current backend: plain array of projects
+        // 2) Legacy: { ok, projects }
+        let rawProjects: any[] | null = null;
+
+        if (Array.isArray(raw)) {
+          rawProjects = raw;
+        } else {
+          const env = raw as LegacyProjectsEnvelope;
+          if (env && typeof env === "object") {
+            if (env.error && !env.ok) {
+              setError(env.error);
+              setLoading(false);
+              return;
+            }
+            if (env.ok && Array.isArray(env.projects)) {
+              rawProjects = env.projects;
+            }
+          }
+        }
+
+        if (!rawProjects) {
+          console.error("Unexpected projects payload:", raw);
+          setError("Failed to load projects (unexpected response shape).");
           setLoading(false);
           return;
         }
 
-        setProjects(data.projects);
+        const mapped: Project[] = rawProjects.map((p: any) => ({
+          id: String(p.id),
+          title: String(p.title ?? ""),
+          description:
+            p.description === null || p.description === undefined
+              ? null
+              : String(p.description),
+          city: String(p.city ?? ""),
+          state: String(p.state ?? ""),
+          payPerVisit: String(p.payPerVisit ?? ""),
+          status:
+            p.status === undefined || p.status === null
+              ? null
+              : String(p.status),
+          createdAt:
+            p.createdAt === undefined || p.createdAt === null
+              ? undefined
+              : String(p.createdAt),
+        }));
+
+        setProjects(mapped);
         setError(null);
       } catch (err) {
         console.error("Network error loading projects", err);
@@ -160,7 +205,7 @@ export default function InvestorDashboardPage() {
           )}
 
           {!loading && error && (
-            <div className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-800 dark:border-red-700 dark:bg-red-950/40 dark:text-red-200">
+            <div className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-800 dark:border-slate-700 dark:bg-red-950/40 dark:text-red-200">
               {error}
             </div>
           )}
