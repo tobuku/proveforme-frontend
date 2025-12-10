@@ -18,6 +18,7 @@ type AuthUser = {
 
 type Project = {
   id: string;
+  investorId?: string;
   title: string;
   description: string | null;
   city: string;
@@ -67,7 +68,7 @@ export default function InvestorDashboardPage() {
     }
   }, [router]);
 
-  // Load projects for this investor
+  // Load projects and filter to this investor
   useEffect(() => {
     async function loadProjects() {
       if (typeof window === "undefined") return;
@@ -77,6 +78,18 @@ export default function InvestorDashboardPage() {
         setLoading(false);
         setError("Missing auth token. Please log in again.");
         return;
+      }
+
+      // Try to read current investor id from storage
+      let currentInvestorId: string | null = null;
+      try {
+        const rawUser = localStorage.getItem("pfm_user");
+        if (rawUser) {
+          const user = JSON.parse(rawUser) as AuthUser;
+          currentInvestorId = user.id;
+        }
+      } catch (err) {
+        console.error("Failed to read investor id from storage", err);
       }
 
       try {
@@ -132,6 +145,10 @@ export default function InvestorDashboardPage() {
 
         const mapped: Project[] = rawProjects.map((p: any) => ({
           id: String(p.id),
+          investorId:
+            p.investorId === undefined || p.investorId === null
+              ? undefined
+              : String(p.investorId),
           title: String(p.title ?? ""),
           description:
             p.description === null || p.description === undefined
@@ -150,7 +167,15 @@ export default function InvestorDashboardPage() {
               : String(p.createdAt),
         }));
 
-        setProjects(mapped);
+        // Frontend safety filter so each investor only sees their own projects
+        let filtered = mapped;
+        if (currentInvestorId) {
+          filtered = mapped.filter(
+            (p) => !p.investorId || p.investorId === currentInvestorId
+          );
+        }
+
+        setProjects(filtered);
         setError(null);
       } catch (err) {
         console.error("Network error loading projects", err);
