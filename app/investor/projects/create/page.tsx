@@ -63,7 +63,7 @@ export default function CreateProjectPage() {
 
     setSubmitting(true);
     try {
-      const res = await fetch(`${API_BASE}/api/v1/investor/projects/create`, {
+      const res = await fetch(`${API_BASE}/api/v1/projects/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
