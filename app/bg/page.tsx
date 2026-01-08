@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
 
 type UserRole = "INVESTOR" | "BG";
 
@@ -34,6 +38,7 @@ type BgVisitsResponse = {
 };
 
 export default function BgDashboardPage() {
+  const router = useRouter();
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [authToken, setAuthToken] = useState<string | null>(null);
 
@@ -81,7 +86,7 @@ export default function BgDashboardPage() {
       setError(null);
       setVisits(null);
 
-      const res = await fetch("http://localhost:4000/api/v1/visits/my", {
+      const res = await fetch(`${API_BASE}/api/v1/visits/my`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -114,11 +119,9 @@ export default function BgDashboardPage() {
     if (typeof window !== "undefined") {
       localStorage.removeItem("pfm_token");
       localStorage.removeItem("pfm_user");
+      localStorage.removeItem("pfm_role");
     }
-    setAuthUser(null);
-    setAuthToken(null);
-    setVisits(null);
-    setError("Logged out. Please log in again to see your visits.");
+    router.push("/login");
   }
 
   return (
