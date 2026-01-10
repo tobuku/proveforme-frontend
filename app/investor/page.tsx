@@ -245,9 +245,10 @@ export default function InvestorDashboardPage() {
           {!loading && !error && projects.length > 0 && (
             <div className="grid gap-3 md:grid-cols-2">
               {projects.map((project) => (
-                <div
+                <Link
+                  href={`/investor/projects/${project.id}`}
                   key={project.id}
-                  className="flex flex-col justify-between rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-300"
+                  className="flex flex-col justify-between rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs text-slate-700 transition-colors hover:border-indigo-300 hover:bg-indigo-50/50 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-300 dark:hover:border-indigo-700 dark:hover:bg-indigo-900/20"
                 >
                   <div className="space-y-1">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-500 dark:text-indigo-300">
@@ -269,13 +270,18 @@ export default function InvestorDashboardPage() {
                         ${project.payPerVisit}
                       </span>
                     </span>
-                    {project.status && (
-                      <span className="rounded-full border border-slate-300 px-2 py-0.5 text-[10px] uppercase tracking-wide text-slate-600 dark:border-slate-600 dark:text-slate-200">
-                        {project.status}
+                    <div className="flex items-center gap-2">
+                      {project.status && (
+                        <span className="rounded-full border border-slate-300 px-2 py-0.5 text-[10px] uppercase tracking-wide text-slate-600 dark:border-slate-600 dark:text-slate-200">
+                          {project.status}
+                        </span>
+                      )}
+                      <span className="text-indigo-500 dark:text-indigo-400">
+                        Manage &rarr;
                       </span>
-                    )}
+                    </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}

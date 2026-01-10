@@ -16,6 +16,15 @@ type AuthUser = {
   role: UserRole | string;
 };
 
+type StripeStatus = {
+  onboarded: boolean;
+  stripeAccountId?: string;
+  detailsSubmitted?: boolean;
+  chargesEnabled?: boolean;
+  payoutsEnabled?: boolean;
+  message?: string;
+};
+
 type VisitForBg = {
   id: string;
   projectId: string;
@@ -46,6 +55,11 @@ export default function BgDashboardPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Stripe onboarding state
+  const [stripeStatus, setStripeStatus] = useState<StripeStatus | null>(null);
+  const [stripeLoading, setStripeLoading] = useState(false);
+  const [stripeError, setStripeError] = useState<string | null>(null);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -72,13 +86,61 @@ export default function BgDashboardPage() {
         return;
       }
 
-      // Fetch BG's own visits
+      // Fetch BG's own visits and Stripe status
       fetchBgVisits(token);
+      fetchStripeStatus(token);
     } catch {
       setError("Failed to read login info. Try logging in again.");
       setLoading(false);
     }
   }, []);
+
+  async function fetchStripeStatus(token: string) {
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/payments/connect/status`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setStripeStatus(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch Stripe status:", err);
+    }
+  }
+
+  async function startStripeOnboarding() {
+    if (!authToken) return;
+
+    setStripeLoading(true);
+    setStripeError(null);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/payments/connect/onboard`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setStripeError(data.error || "Failed to start onboarding");
+        return;
+      }
+
+      // Redirect to Stripe onboarding
+      if (data.onboardingUrl) {
+        window.location.href = data.onboardingUrl;
+      }
+    } catch (err) {
+      setStripeError("Network error starting onboarding");
+    } finally {
+      setStripeLoading(false);
+    }
+  }
 
   async function fetchBgVisits(token: string) {
     try {
@@ -163,6 +225,43 @@ export default function BgDashboardPage() {
             )}
           </div>
         </header>
+
+        {/* Stripe Onboarding Section */}
+        <section className="p-4 rounded-xl bg-slate-900/70 border border-slate-700 space-y-3">
+          <h2 className="text-sm font-semibold text-slate-200">Payment Setup</h2>
+
+          {stripeStatus?.onboarded ? (
+            <div className="flex items-center gap-2">
+              <span className="inline-block h-2 w-2 rounded-full bg-green-500"></span>
+              <p className="text-xs text-green-400">
+                Your payment account is set up and ready to receive payments.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-xs text-slate-300">
+                To receive payments for your work, you need to set up your Stripe account.
+                This is a one-time process that takes about 5 minutes.
+              </p>
+
+              {stripeError && (
+                <p className="text-xs text-red-400">{stripeError}</p>
+              )}
+
+              <button
+                onClick={startStripeOnboarding}
+                disabled={stripeLoading}
+                className="px-4 py-2 rounded bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-500 disabled:opacity-50"
+              >
+                {stripeLoading
+                  ? "Starting..."
+                  : stripeStatus?.stripeAccountId
+                  ? "Continue Setup"
+                  : "Set Up Payments"}
+              </button>
+            </div>
+          )}
+        </section>
 
         <section className="p-4 rounded-xl bg-slate-900/70 border border-slate-700 space-y-3">
           <h2 className="text-sm font-semibold text-slate-200">My Visits</h2>
