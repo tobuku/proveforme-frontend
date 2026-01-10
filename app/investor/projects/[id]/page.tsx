@@ -322,11 +322,14 @@ export default function ProjectDetailPage() {
           </div>
         )}
 
-        {/* Fund Project Section */}
+        {/* Fund Boots on the Ground Section */}
         <section className="mb-8 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
           <h2 className="mb-4 text-sm font-semibold text-slate-900 dark:text-slate-50">
-            Fund Project
+            Fund Boots on the Ground
           </h2>
+          <p className="mb-4 text-xs text-slate-600 dark:text-slate-400">
+            Select a BG to assign to this project and fund their visit. Payment will be held in escrow until you release it after the visit is completed.
+          </p>
 
           {clientSecret ? (
             <Elements
@@ -361,7 +364,7 @@ export default function ProjectDetailPage() {
                 </select>
                 {availableBGs.length === 0 && (
                   <p className="mt-1 text-xs text-slate-500">
-                    No BGs available. BGs must complete Stripe onboarding first.
+                    No Boots on the Ground available yet. BGs must register and complete their payment setup before they can be assigned to projects.
                   </p>
                 )}
               </div>
@@ -391,7 +394,7 @@ export default function ProjectDetailPage() {
                 disabled={fundingLoading || !selectedBG || !fundAmount}
                 className="w-full rounded-md bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-400 disabled:opacity-50"
               >
-                {fundingLoading ? "Creating payment..." : "Continue to Payment"}
+                {fundingLoading ? "Setting up payment..." : "Fund This BG"}
               </button>
             </div>
           )}

@@ -277,7 +277,7 @@ export default function InvestorDashboardPage() {
                         </span>
                       )}
                       <span className="text-indigo-500 dark:text-indigo-400">
-                        Manage &rarr;
+                        Fund BG &rarr;
                       </span>
                     </div>
                   </div>
