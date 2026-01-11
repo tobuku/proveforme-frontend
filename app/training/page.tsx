@@ -201,11 +201,11 @@ export default function TrainingPage() {
           </section>
 
           {/* Checklist */}
-          <section className="rounded-lg border border-indigo-200 bg-indigo-50 p-6">
-            <h2 className="text-xl font-semibold text-indigo-900 mb-4">
+          <section className="rounded-lg border border-blue-200 bg-blue-50 p-6">
+            <h2 className="text-xl font-semibold text-blue-900 mb-4">
               Pre-Visit Checklist
             </h2>
-            <ul className="space-y-2 text-indigo-800 text-sm">
+            <ul className="space-y-2 text-blue-800 text-sm">
               <li className="flex items-start gap-2">
                 <span>☐</span> Phone fully charged (or bring a portable charger)
               </li>
@@ -234,7 +234,7 @@ export default function TrainingPage() {
         <div className="mt-12 pt-8 border-t border-slate-200">
           <Link
             href="/"
-            className="text-sm text-indigo-600 hover:text-indigo-500"
+            className="text-sm text-[#0066FF] hover:text-[#0052CC]"
           >
             &larr; Back to Home
           </Link>

@@ -18,7 +18,7 @@ type AuthUser = {
 // Scope of Work categories and items (removed "Other" category)
 const SCOPE_OF_WORK_OPTIONS = {
   "General": [
-    "Permits",
+    "Posted Permits",
     "Foundation",
     "Demo",
     "Frame",
@@ -191,6 +191,15 @@ export default function CreateProjectPage() {
             Set up a property for Boots on the Ground visits.
           </p>
         </header>
+
+        {/* Important Notice */}
+        <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <p className="font-medium">Important:</p>
+          <p>
+            Please review all information carefully before submitting. If you notice any errors after creating a project,
+            you will need to delete the project from the project detail page and create a new one with the correct information.
+          </p>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-6 text-sm">
           {error && (

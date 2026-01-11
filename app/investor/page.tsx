@@ -23,6 +23,7 @@ type Project = {
   description: string | null;
   city: string;
   state: string;
+  fullAddress?: string | null;
   payPerVisit: string;
   status?: string | null;
   createdAt?: string;
@@ -156,6 +157,10 @@ export default function InvestorDashboardPage() {
               : String(p.description),
           city: String(p.city ?? ""),
           state: String(p.state ?? ""),
+          fullAddress:
+            p.fullAddress === null || p.fullAddress === undefined
+              ? null
+              : String(p.fullAddress),
           payPerVisit: String(p.payPerVisit ?? ""),
           status:
             p.status === undefined || p.status === null
@@ -257,6 +262,11 @@ export default function InvestorDashboardPage() {
                     <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
                       {project.title}
                     </h3>
+                    {project.fullAddress && (
+                      <p className="text-[11px] font-medium text-slate-700 dark:text-slate-200">
+                        {project.fullAddress}
+                      </p>
+                    )}
                     {project.description && (
                       <p className="text-[11px] text-slate-600 dark:text-slate-300">
                         {project.description}
