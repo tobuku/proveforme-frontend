@@ -434,11 +434,15 @@ export default function ProjectDetailPage() {
                         payment.status === "RELEASED"
                           ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
                           : payment.status === "FUNDED"
+                          ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                          : payment.status === "PENDING"
                           ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300"
+                          : payment.status === "FAILED"
+                          ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
                           : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
                       }`}
                     >
-                      {payment.status}
+                      {payment.status === "PENDING" ? "Awaiting Payment" : payment.status}
                     </span>
                     {(payment.status === "FUNDED" || payment.status === "HELD") && (
                       <button
