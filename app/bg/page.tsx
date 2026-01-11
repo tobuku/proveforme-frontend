@@ -86,6 +86,8 @@ export default function BgDashboardPage() {
   // Available projects state
   const [availableProjects, setAvailableProjects] = useState<AvailableProject[]>([]);
   const [projectsLoading, setProjectsLoading] = useState(false);
+  const [expressingInterest, setExpressingInterest] = useState<string | null>(null);
+  const [interestSuccess, setInterestSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -198,6 +200,32 @@ export default function BgDashboardPage() {
 
   function removeZipCode(zip: string) {
     setServiceZipCodes(serviceZipCodes.filter((z) => z !== zip));
+  }
+
+  async function expressInterest(projectId: string) {
+    if (!authToken) return;
+
+    setExpressingInterest(projectId);
+    setInterestSuccess(null);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/projects/${projectId}/interest`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (res.ok) {
+        setInterestSuccess(projectId);
+        setTimeout(() => setInterestSuccess(null), 3000);
+      }
+    } catch (err) {
+      console.error("Failed to express interest:", err);
+    } finally {
+      setExpressingInterest(null);
+    }
   }
 
   async function fetchStripeStatus(token: string) {
@@ -385,11 +413,11 @@ export default function BgDashboardPage() {
                   onKeyDown={(e) => e.key === "Enter" && addZipCode()}
                   placeholder="Enter zip code"
                   maxLength={10}
-                  className="flex-1 rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none focus:border-indigo-400"
+                  className="flex-1 rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none focus:border-[#0066FF]"
                 />
                 <button
                   onClick={addZipCode}
-                  className="px-3 py-2 rounded bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-500"
+                  className="px-3 py-2 rounded bg-[#0066FF] text-white text-xs font-semibold hover:bg-[#0052CC]"
                 >
                   Add
                 </button>
@@ -400,7 +428,7 @@ export default function BgDashboardPage() {
                   {serviceZipCodes.map((zip) => (
                     <span
                       key={zip}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-indigo-900/50 text-indigo-300 text-xs"
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-blue-900/50 text-blue-300 text-xs"
                     >
                       {zip}
                       <button
@@ -506,7 +534,7 @@ export default function BgDashboardPage() {
                   >
                     <div className="flex items-start justify-between">
                       <div>
-                        <p className="text-[10px] uppercase tracking-wider text-indigo-400">
+                        <p className="text-[10px] uppercase tracking-wider text-[#0066FF]">
                           {project.city}, {project.state} {project.zipCode && `- ${project.zipCode}`}
                         </p>
                         <h3 className="text-sm font-semibold text-slate-100">
@@ -545,10 +573,27 @@ export default function BgDashboardPage() {
                       </div>
                     )}
 
-                    <p className="text-[10px] text-slate-500">
-                      Posted by {project.investor.firstName} {project.investor.lastName} •{" "}
-                      {new Date(project.createdAt).toLocaleDateString()}
-                    </p>
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-700">
+                      <p className="text-[10px] text-slate-500">
+                        Posted by {project.investor.firstName} {project.investor.lastName} •{" "}
+                        {new Date(project.createdAt).toLocaleDateString()}
+                      </p>
+                      <button
+                        onClick={() => expressInterest(project.id)}
+                        disabled={expressingInterest === project.id || interestSuccess === project.id}
+                        className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors ${
+                          interestSuccess === project.id
+                            ? "bg-green-600 text-white"
+                            : "bg-[#0066FF] text-white hover:bg-[#0052CC]"
+                        } disabled:opacity-50`}
+                      >
+                        {expressingInterest === project.id
+                          ? "Sending..."
+                          : interestSuccess === project.id
+                          ? "Interest Sent!"
+                          : "Express Interest"}
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

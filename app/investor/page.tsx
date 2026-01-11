@@ -198,7 +198,7 @@ export default function InvestorDashboardPage() {
       <main className="mx-auto max-w-5xl px-4 py-8 text-sm">
         <div className="mb-6 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-indigo-500 dark:text-indigo-300">
+            <p className="text-xs uppercase tracking-[0.2em] text-[#0066FF] dark:text-indigo-300">
               Investor Dashboard
             </p>
             <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">
@@ -212,7 +212,7 @@ export default function InvestorDashboardPage() {
 
           <Link
             href="/investor/projects/create"
-            className="inline-flex items-center gap-1 rounded-md bg-indigo-500 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-400"
+            className="inline-flex items-center gap-1 rounded-md bg-[#0066FF] px-3 py-2 text-xs font-semibold text-white hover:bg-[#0052CC]"
           >
             <span>+ Create project</span>
           </Link>
@@ -251,7 +251,7 @@ export default function InvestorDashboardPage() {
                   className="flex flex-col justify-between rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs text-slate-700 transition-colors hover:border-indigo-300 hover:bg-indigo-50/50 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-300 dark:hover:border-indigo-700 dark:hover:bg-indigo-900/20"
                 >
                   <div className="space-y-1">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-500 dark:text-indigo-300">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#0066FF] dark:text-indigo-300">
                       {project.city}, {project.state}
                     </p>
                     <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
@@ -276,7 +276,7 @@ export default function InvestorDashboardPage() {
                           {project.status}
                         </span>
                       )}
-                      <span className="text-indigo-500 dark:text-indigo-400">
+                      <span className="text-[#0066FF] dark:text-indigo-400">
                         Fund BG &rarr;
                       </span>
                     </div>

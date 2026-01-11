@@ -4,14 +4,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AuthedHeader } from "../components/AuthedHeader";
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
-
-type BackendHealth = {
-  ok: boolean;
-  message?: string;
-} | null;
-
 type Role = "INVESTOR" | "BG";
 
 type AuthUser = {
@@ -23,26 +15,7 @@ type AuthUser = {
 };
 
 export default function Home() {
-  const [backendHealth, setBackendHealth] = useState<BackendHealth>(null);
-  const [backendError, setBackendError] = useState<string | null>(null);
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
-
-  // Backend health check
-  useEffect(() => {
-    fetch(`${API_BASE}/api/v1/health`)
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`Health failed (${res.status})`);
-        return res.json();
-      })
-      .then((data) => {
-        setBackendHealth(data);
-        setBackendError(null);
-      })
-      .catch((err) => {
-        console.error("Backend health error", err);
-        setBackendError("Failed to contact backend.");
-      });
-  }, []);
 
   // Read auth from localStorage (set by /login)
   useEffect(() => {
@@ -85,7 +58,7 @@ export default function Home() {
             </p>
 
             <h1 className="text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
-              Connect investors with Boots on the Ground.
+              Boots on the Ground for Investors.
             </h1>
 
             <p className="max-w-xl text-sm leading-relaxed text-slate-700">
@@ -97,7 +70,7 @@ export default function Home() {
             <div className="flex flex-wrap gap-3 pt-1 text-xs">
               <Link
                 href="/register"
-                className="rounded-md bg-indigo-500 px-3 py-2 font-semibold text-white hover:bg-indigo-400"
+                className="rounded-md bg-[#0066FF] px-3 py-2 font-semibold text-white hover:bg-[#0052CC]"
               >
                 Become a member
               </Link>
@@ -115,7 +88,7 @@ export default function Home() {
                 <p>
                   You are logged in as{" "}
                   <span className="font-semibold">{fullName}</span>{" "}
-                  {authUser.role === "INVESTOR" ? "(Investor)" : "(BG / Prover)"}.
+                  {authUser.role === "INVESTOR" ? "(Investor)" : "(BG)"}.
                   <span className="ml-1">
                     Go to{" "}
                     <Link
@@ -148,13 +121,13 @@ export default function Home() {
               Member area
             </p>
             <p className="leading-relaxed">
-              Your main investor and prover tools live inside the authenticated
+              Your main investor and BG tools live inside the authenticated
               dashboards. From there you can manage projects and verify work
               without being physically present.
             </p>
             <ul className="space-y-1 list-disc pl-4">
               <li>Create projects and set pay per visit.</li>
-              <li>Approve or invite local BGs / Provers.</li>
+              <li>Approve or invite local Boots on the Ground.</li>
               <li>Review visit photos, timestamps, and status updates.</li>
             </ul>
           </div>
@@ -176,7 +149,7 @@ export default function Home() {
               Secure coordination
             </p>
             <p>
-              Investors and Provers coordinate through a structured workflow,
+              Investors and BGs coordinate through a structured workflow,
               which helps protect everyone and reduces miscommunication.
             </p>
           </div>
@@ -186,7 +159,7 @@ export default function Home() {
             </p>
             <p>
               Start with a few properties in one market, then expand to more
-              cities as your Prover network grows.
+              cities as your network grows.
             </p>
           </div>
         </section>
@@ -194,21 +167,29 @@ export default function Home() {
 
       {/* FOOTER */}
       <footer className="border-t border-slate-200 bg-slate-50">
-        <div className="mx-auto flex max-w-5xl flex-col gap-1 px-4 py-4 text-[11px] text-slate-500 md:flex-row md:items-center md:justify-between">
-          <p>
-            ProveForMe · Commission based platform connecting remote investors
-            with local "Boots on the Ground" (Provers). Demo environment only.
-          </p>
-          <p>
-            Backend status:{" "}
-            {backendError
-              ? `error: ${backendError}`
-              : backendHealth?.ok
-              ? `ok: ${
-                  backendHealth.message || "ProveForMe backend is alive"
-                }`
-              : "checking..."}
-          </p>
+        <div className="mx-auto max-w-5xl px-4 py-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-wrap gap-4 text-sm text-slate-600">
+              <Link href="/about" className="hover:text-indigo-600">
+                About Us
+              </Link>
+              <Link href="/support" className="hover:text-indigo-600">
+                Support
+              </Link>
+              <Link href="/terms" className="hover:text-indigo-600">
+                Terms of Service
+              </Link>
+              <Link href="/privacy" className="hover:text-indigo-600">
+                Privacy Policy
+              </Link>
+              <Link href="/sitemap-page" className="hover:text-indigo-600">
+                Sitemap
+              </Link>
+            </div>
+            <p className="text-[11px] text-slate-500">
+              &copy; 2025 ProveForMe.com All Rights Reserved
+            </p>
+          </div>
         </div>
       </footer>
     </div>

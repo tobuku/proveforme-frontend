@@ -15,7 +15,7 @@ type AuthUser = {
   lastName?: string | null;
 };
 
-// Scope of Work categories and items
+// Scope of Work categories and items (removed "Other" category)
 const SCOPE_OF_WORK_OPTIONS = {
   "General": [
     "Permits",
@@ -59,9 +59,6 @@ const SCOPE_OF_WORK_OPTIONS = {
     "HVAC",
     "Electrical full rewire",
     "Plumbing",
-  ],
-  "Other": [
-    "Draw Inspection Form",
   ],
 };
 
@@ -182,39 +179,39 @@ export default function CreateProjectPage() {
   }
 
   return (
-    <div className="pfm-shell">
+    <div className="min-h-screen bg-white">
       <AuthedHeader role={user?.role ?? null} />
 
       <main className="mx-auto max-w-2xl p-8 space-y-6">
         <header className="space-y-2">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Create new project
+          <h1 className="text-2xl font-semibold tracking-tight text-black">
+            Create New Project
           </h1>
-          <p className="text-xs text-slate-300">
+          <p className="text-sm text-slate-600">
             Set up a property for Boots on the Ground visits.
           </p>
         </header>
 
         <form onSubmit={handleSubmit} className="space-y-6 text-sm">
           {error && (
-            <div className="rounded-md border border-red-500 bg-red-950/40 px-3 py-2 text-xs text-red-200">
+            <div className="rounded-md border border-red-400 bg-red-50 px-4 py-3 text-sm text-red-800">
               {error}
             </div>
           )}
 
           {/* Property Information */}
           <section className="space-y-4">
-            <h2 className="text-sm font-semibold text-slate-100 border-b border-slate-700 pb-2">
+            <h2 className="text-sm font-semibold text-black border-b border-slate-200 pb-2">
               Property Information
             </h2>
 
             <div className="space-y-1">
-              <label className="block text-xs font-semibold text-slate-200">
+              <label className="block text-sm font-medium text-black">
                 Title *
               </label>
               <input
                 type="text"
-                className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none focus:border-indigo-400"
+                className="w-full rounded-md border border-slate-300 bg-white px-4 py-2.5 text-sm text-black placeholder-slate-400 outline-none focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF]"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Example: San Antonio rehab walk through"
@@ -222,11 +219,11 @@ export default function CreateProjectPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="block text-xs font-semibold text-slate-200">
+              <label className="block text-sm font-medium text-black">
                 Description
               </label>
               <textarea
-                className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none focus:border-indigo-400"
+                className="w-full rounded-md border border-slate-300 bg-white px-4 py-2.5 text-sm text-black placeholder-slate-400 outline-none focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF]"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
@@ -234,14 +231,14 @@ export default function CreateProjectPage() {
               />
             </div>
 
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div className="space-y-1">
-                <label className="block text-xs font-semibold text-slate-200">
+                <label className="block text-sm font-medium text-black">
                   City *
                 </label>
                 <input
                   type="text"
-                  className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none focus:border-indigo-400"
+                  className="w-full rounded-md border border-slate-300 bg-white px-4 py-2.5 text-sm text-black placeholder-slate-400 outline-none focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF]"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   placeholder="San Antonio"
@@ -249,12 +246,12 @@ export default function CreateProjectPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="block text-xs font-semibold text-slate-200">
+                <label className="block text-sm font-medium text-black">
                   State *
                 </label>
                 <input
                   type="text"
-                  className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none focus:border-indigo-400"
+                  className="w-full rounded-md border border-slate-300 bg-white px-4 py-2.5 text-sm text-black placeholder-slate-400 outline-none focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF]"
                   value={stateVal}
                   onChange={(e) => setStateVal(e.target.value)}
                   placeholder="TX"
@@ -262,12 +259,12 @@ export default function CreateProjectPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="block text-xs font-semibold text-slate-200">
+                <label className="block text-sm font-medium text-black">
                   Zip Code
                 </label>
                 <input
                   type="text"
-                  className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none focus:border-indigo-400"
+                  className="w-full rounded-md border border-slate-300 bg-white px-4 py-2.5 text-sm text-black placeholder-slate-400 outline-none focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF]"
                   value={zipCode}
                   onChange={(e) => setZipCode(e.target.value)}
                   placeholder="78201"
@@ -277,12 +274,12 @@ export default function CreateProjectPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="block text-xs font-semibold text-slate-200">
-                Full address
+              <label className="block text-sm font-medium text-black">
+                Full Address
               </label>
               <input
                 type="text"
-                className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none focus:border-indigo-400"
+                className="w-full rounded-md border border-slate-300 bg-white px-4 py-2.5 text-sm text-black placeholder-slate-400 outline-none focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF]"
                 value={fullAddress}
                 onChange={(e) => setFullAddress(e.target.value)}
                 placeholder="1234 Sample St, San Antonio, TX 78201"
@@ -290,14 +287,14 @@ export default function CreateProjectPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="block text-xs font-semibold text-slate-200">
-                Pay per visit (USD) *
+              <label className="block text-sm font-medium text-black">
+                Pay Per Visit (USD) *
               </label>
               <input
                 type="number"
                 min="0"
                 step="1"
-                className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none focus:border-indigo-400"
+                className="w-full rounded-md border border-slate-300 bg-white px-4 py-2.5 text-sm text-black placeholder-slate-400 outline-none focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF]"
                 value={payPerVisit}
                 onChange={(e) => setPayPerVisit(e.target.value)}
                 placeholder="75"
@@ -307,54 +304,54 @@ export default function CreateProjectPage() {
 
           {/* Scope of Work */}
           <section className="space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-700 pb-2">
-              <h2 className="text-sm font-semibold text-slate-100">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+              <h2 className="text-sm font-semibold text-black">
                 Scope of Work
               </h2>
-              <span className="text-xs text-slate-400">
+              <span className="text-sm text-slate-600">
                 {selectedScope.length} items selected
               </span>
             </div>
-            <p className="text-xs text-slate-400">
-              Select the items that the BG should inspect and document during their visit.
+            <p className="text-sm text-slate-600">
+              Select items below that you need the BG to document during their visit.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {Object.entries(SCOPE_OF_WORK_OPTIONS).map(([category, items]) => (
                 <div
                   key={category}
-                  className="rounded-lg border border-slate-700 bg-slate-900/50 p-3 space-y-2"
+                  className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3"
                 >
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-semibold text-indigo-400">{category}</h3>
-                    <div className="flex gap-2">
+                    <h3 className="text-sm font-semibold text-[#0066FF]">{category}</h3>
+                    <div className="flex gap-3">
                       <button
                         type="button"
                         onClick={() => selectAllInCategory(category)}
-                        className="text-[10px] text-slate-400 hover:text-slate-200"
+                        className="text-xs text-slate-500 hover:text-[#0066FF]"
                       >
                         All
                       </button>
                       <button
                         type="button"
                         onClick={() => deselectAllInCategory(category)}
-                        className="text-[10px] text-slate-400 hover:text-slate-200"
+                        className="text-xs text-slate-500 hover:text-[#0066FF]"
                       >
                         None
                       </button>
                     </div>
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     {items.map((item) => (
                       <label
                         key={item}
-                        className="flex items-center gap-2 cursor-pointer text-xs text-slate-300 hover:text-slate-100"
+                        className="flex items-center gap-2 cursor-pointer text-sm text-black hover:text-[#0066FF]"
                       >
                         <input
                           type="checkbox"
                           checked={selectedScope.includes(item)}
                           onChange={() => toggleScopeItem(item)}
-                          className="rounded border-slate-600 bg-slate-800 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-0"
+                          className="h-4 w-4 rounded border-slate-300 text-[#0066FF] focus:ring-[#0066FF]"
                         />
                         {item}
                       </label>
@@ -365,11 +362,11 @@ export default function CreateProjectPage() {
             </div>
           </section>
 
-          <div className="flex items-center justify-between pt-4 border-t border-slate-700">
+          <div className="flex items-center justify-between pt-6 border-t border-slate-200">
             <button
               type="button"
               onClick={() => router.push("/investor")}
-              className="text-xs text-slate-300 hover:text-slate-100"
+              className="text-sm text-slate-600 hover:text-black"
             >
               Cancel and go back
             </button>
@@ -377,9 +374,9 @@ export default function CreateProjectPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-md bg-indigo-500 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-md bg-[#0066FF] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#0052CC] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {submitting ? "Creating..." : "Create project"}
+              {submitting ? "Creating..." : "Create Project"}
             </button>
           </div>
         </form>

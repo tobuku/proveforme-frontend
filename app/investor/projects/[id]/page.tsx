@@ -24,6 +24,7 @@ type Project = {
   description: string | null;
   city: string;
   state: string;
+  zipCode?: string | null;
   fullAddress?: string;
   payPerVisit: string;
   status: string | null;
@@ -35,6 +36,7 @@ type BG = {
   lastName: string;
   email: string;
   stripeOnboarded: boolean;
+  serviceZipCodes?: string | null;
 };
 
 type Payment = {
@@ -48,6 +50,22 @@ type Payment = {
     firstName: string;
     lastName: string;
     email: string;
+  };
+};
+
+type BgInterest = {
+  id: string;
+  status: string;
+  message: string | null;
+  createdAt: string;
+  bg: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    city: string | null;
+    state: string | null;
+    stripeOnboarded: boolean;
   };
 };
 
@@ -92,7 +110,7 @@ function CheckoutForm({
       <button
         type="submit"
         disabled={!stripe || loading}
-        className="w-full rounded-md bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-400 disabled:opacity-50"
+        className="w-full rounded-md bg-[#0066FF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0052CC] disabled:opacity-50"
       >
         {loading ? "Processing..." : "Pay Now"}
       </button>
@@ -119,6 +137,13 @@ export default function ProjectDetailPage() {
   const [fundingLoading, setFundingLoading] = useState(false);
   const [fundingError, setFundingError] = useState<string | null>(null);
   const [fundingSuccess, setFundingSuccess] = useState(false);
+
+  // BG Interests state
+  const [interests, setInterests] = useState<BgInterest[]>([]);
+
+  // Delete state
+  const [deleting, setDeleting] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
 
   // Check for payment success in URL
   useEffect(() => {
@@ -169,13 +194,23 @@ export default function ProjectDetailPage() {
           setPayments(data.payments || []);
         }
 
-        // Load available BGs (users with role BG who are onboarded)
+        // Load available BGs (users with role BG)
         const bgsRes = await fetch(`${API_BASE}/api/v1/users/bgs`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (bgsRes.ok) {
           const data = await bgsRes.json();
-          setAvailableBGs((data.bgs || data || []).filter((bg: BG) => bg.stripeOnboarded));
+          setAvailableBGs(data.bgs || data || []);
+        }
+
+        // Load BG interests for this project
+        const interestsRes = await fetch(
+          `${API_BASE}/api/v1/projects/${projectId}/interests`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (interestsRes.ok) {
+          const data = await interestsRes.json();
+          setInterests(data.interests || []);
         }
       } catch (err) {
         console.error("Error loading project data:", err);
@@ -262,6 +297,33 @@ export default function ProjectDetailPage() {
     }
   };
 
+  // Delete project
+  const handleDeleteProject = async () => {
+    const token = localStorage.getItem("pfm_token");
+    if (!token) return;
+
+    setDeleting(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/projects/${projectId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.ok) {
+        router.push("/investor");
+      } else {
+        const data = await res.json();
+        setError(data.error || "Failed to delete project");
+      }
+    } catch (err) {
+      console.error("Error deleting project:", err);
+      setError("Failed to delete project");
+    } finally {
+      setDeleting(false);
+      setDeleteConfirm(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="pfm-shell">
@@ -292,19 +354,51 @@ export default function ProjectDetailPage() {
         {/* Back link */}
         <button
           onClick={() => router.push("/investor")}
-          className="mb-4 text-xs text-indigo-500 hover:underline"
+          className="mb-4 text-xs text-[#0066FF] hover:underline"
         >
           &larr; Back to Dashboard
         </button>
 
         {/* Project header */}
         <div className="mb-6">
-          <p className="text-xs uppercase tracking-widest text-indigo-500">
-            {project.city}, {project.state}
-          </p>
-          <h1 className="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-50">
-            {project.title}
-          </h1>
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-widest text-[#0066FF]">
+                {project.city}, {project.state}
+              </p>
+              <h1 className="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-50">
+                {project.title}
+              </h1>
+            </div>
+            {project.status === "OPEN" && (
+              <div className="flex gap-2">
+                {!deleteConfirm ? (
+                  <button
+                    onClick={() => setDeleteConfirm(true)}
+                    className="rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
+                  >
+                    Delete Project
+                  </button>
+                ) : (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleDeleteProject}
+                      disabled={deleting}
+                      className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-500 disabled:opacity-50"
+                    >
+                      {deleting ? "Deleting..." : "Confirm Delete"}
+                    </button>
+                    <button
+                      onClick={() => setDeleteConfirm(false)}
+                      className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           {project.description && (
             <p className="mt-1 text-slate-600 dark:text-slate-300">
               {project.description}
@@ -350,23 +444,64 @@ export default function ProjectDetailPage() {
                 <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
                   Select BG (Boots on the Ground)
                 </label>
-                <select
-                  value={selectedBG}
-                  onChange={(e) => setSelectedBG(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700"
-                >
-                  <option value="">-- Select a BG --</option>
-                  {availableBGs.map((bg) => (
-                    <option key={bg.id} value={bg.id}>
-                      {bg.firstName} {bg.lastName} ({bg.email})
-                    </option>
-                  ))}
-                </select>
-                {availableBGs.length === 0 && (
-                  <p className="mt-1 text-xs text-slate-500">
-                    No Boots on the Ground available yet. BGs must register and complete their payment setup before they can be assigned to projects.
-                  </p>
-                )}
+                {(() => {
+                  // Filter BGs by matching zip codes
+                  const projectZip = project?.zipCode?.trim() || "";
+                  const matchingBGs = projectZip
+                    ? availableBGs.filter((bg) => {
+                        const bgZips = (bg.serviceZipCodes || "")
+                          .split(",")
+                          .map((z) => z.trim())
+                          .filter((z) => z.length > 0);
+                        return bgZips.includes(projectZip);
+                      })
+                    : availableBGs;
+
+                  // Separate onboarded and non-onboarded BGs
+                  const onboardedBGs = matchingBGs.filter((bg) => bg.stripeOnboarded);
+                  const nonOnboardedBGs = matchingBGs.filter((bg) => !bg.stripeOnboarded);
+
+                  return (
+                    <>
+                      <select
+                        value={selectedBG}
+                        onChange={(e) => setSelectedBG(e.target.value)}
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700"
+                      >
+                        <option value="">-- Select a BG --</option>
+                        {onboardedBGs.map((bg) => (
+                          <option key={bg.id} value={bg.id}>
+                            {bg.firstName} {bg.lastName} ({bg.email})
+                          </option>
+                        ))}
+                        {nonOnboardedBGs.length > 0 && (
+                          <optgroup label="-- Payment Setup Incomplete --">
+                            {nonOnboardedBGs.map((bg) => (
+                              <option key={bg.id} value={bg.id} disabled>
+                                {bg.firstName} {bg.lastName} - Not ready for payments
+                              </option>
+                            ))}
+                          </optgroup>
+                        )}
+                      </select>
+                      {matchingBGs.length === 0 && projectZip && (
+                        <p className="mt-1 text-xs text-amber-600">
+                          No BGs service zip code {projectZip}. Try inviting BGs to add this area to their service zones.
+                        </p>
+                      )}
+                      {matchingBGs.length === 0 && !projectZip && (
+                        <p className="mt-1 text-xs text-slate-500">
+                          No Boots on the Ground available yet. BGs must register before they can be assigned to projects.
+                        </p>
+                      )}
+                      {onboardedBGs.length === 0 && nonOnboardedBGs.length > 0 && (
+                        <p className="mt-1 text-xs text-amber-600">
+                          BGs in this area need to complete their payment setup before they can receive funds.
+                        </p>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
 
               <div>
@@ -392,13 +527,64 @@ export default function ProjectDetailPage() {
               <button
                 onClick={handleFundProject}
                 disabled={fundingLoading || !selectedBG || !fundAmount}
-                className="w-full rounded-md bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-400 disabled:opacity-50"
+                className="w-full rounded-md bg-[#0066FF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0052CC] disabled:opacity-50"
               >
                 {fundingLoading ? "Setting up payment..." : "Fund This BG"}
               </button>
             </div>
           )}
         </section>
+
+        {/* BG Interests Section */}
+        {interests.length > 0 && (
+          <section className="mb-8 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-700 dark:bg-blue-900/20">
+            <h2 className="mb-4 text-sm font-semibold text-slate-900 dark:text-slate-50">
+              Interested BGs ({interests.length})
+            </h2>
+            <p className="mb-4 text-xs text-slate-600 dark:text-slate-400">
+              These Boots on the Ground have expressed interest in this project. You can fund any of them above.
+            </p>
+            <div className="space-y-3">
+              {interests.map((interest) => (
+                <div
+                  key={interest.id}
+                  className="flex items-center justify-between rounded-md border border-blue-200 bg-white p-3 dark:border-blue-700 dark:bg-slate-800"
+                >
+                  <div>
+                    <p className="text-xs font-medium text-slate-900 dark:text-slate-50">
+                      {interest.bg.firstName} {interest.bg.lastName}
+                    </p>
+                    <p className="text-[10px] text-slate-500">
+                      {interest.bg.email}
+                      {interest.bg.city && interest.bg.state && (
+                        <span> • {interest.bg.city}, {interest.bg.state}</span>
+                      )}
+                    </p>
+                    {interest.message && (
+                      <p className="text-[10px] text-slate-400 mt-1 italic">
+                        "{interest.message}"
+                      </p>
+                    )}
+                    <p className="text-[10px] text-slate-400">
+                      Interested {new Date(interest.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                        interest.bg.stripeOnboarded
+                          ? "bg-green-100 text-green-700"
+                          : "bg-yellow-100 text-yellow-700"
+                      }`}
+                    >
+                      {interest.bg.stripeOnboarded ? "Ready for Payment" : "Setup Incomplete"}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Payments History */}
         <section>

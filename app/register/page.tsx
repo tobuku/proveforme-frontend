@@ -112,7 +112,7 @@ export default function RegisterPage() {
               </label>
               <input
                 type="text"
-                className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm text-slate-50 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm text-slate-50 focus:outline-none focus:ring-1 focus:ring-[#0066FF]"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 autoComplete="given-name"
@@ -125,7 +125,7 @@ export default function RegisterPage() {
               </label>
               <input
                 type="text"
-                className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm text-slate-50 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm text-slate-50 focus:outline-none focus:ring-1 focus:ring-[#0066FF]"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 autoComplete="family-name"
@@ -138,7 +138,7 @@ export default function RegisterPage() {
             <label className="block text-xs text-slate-300 mb-1">Email</label>
             <input
               type="email"
-              className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm text-slate-50 focus:outline-none focus:ring-1 focus:ring-teal-500"
+              className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm text-slate-50 focus:outline-none focus:ring-1 focus:ring-[#0066FF]"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
@@ -153,7 +153,7 @@ export default function RegisterPage() {
               </label>
               <input
                 type="password"
-                className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm text-slate-50 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm text-slate-50 focus:outline-none focus:ring-1 focus:ring-[#0066FF]"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="new-password"
@@ -166,7 +166,7 @@ export default function RegisterPage() {
               </label>
               <input
                 type="password"
-                className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm text-slate-50 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm text-slate-50 focus:outline-none focus:ring-1 focus:ring-[#0066FF]"
                 value={passwordConfirm}
                 onChange={(e) => setPasswordConfirm(e.target.value)}
                 autoComplete="new-password"
@@ -185,7 +185,7 @@ export default function RegisterPage() {
                 onClick={() => setRole("INVESTOR")}
                 className={`flex-1 rounded border px-2 py-1 ${
                   role === "INVESTOR"
-                    ? "border-teal-500 bg-teal-900/40 text-teal-200"
+                    ? "border-[#0066FF] bg-blue-900/40 text-blue-200"
                     : "border-slate-700 bg-slate-900 text-slate-300 hover:border-slate-500"
                 }`}
               >
@@ -196,11 +196,11 @@ export default function RegisterPage() {
                 onClick={() => setRole("BG")}
                 className={`flex-1 rounded border px-2 py-1 ${
                   role === "BG"
-                    ? "border-teal-500 bg-teal-900/40 text-teal-200"
+                    ? "border-[#0066FF] bg-blue-900/40 text-blue-200"
                     : "border-slate-700 bg-slate-900 text-slate-300 hover:border-slate-500"
                 }`}
               >
-                I&apos;m a Prover (BG)
+                I&apos;m Boots on the Ground (BG)
               </button>
             </div>
           </div>
@@ -220,7 +220,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded bg-teal-600 hover:bg-teal-500 disabled:opacity-60 disabled:cursor-not-allowed text-sm font-medium py-2 mt-1"
+            className="w-full rounded bg-[#0066FF] hover:bg-[#0052CC] disabled:opacity-60 disabled:cursor-not-allowed text-sm font-medium py-2 mt-1"
           >
             {loading ? "Creating account..." : "Create account"}
           </button>
@@ -231,7 +231,7 @@ export default function RegisterPage() {
           <button
             type="button"
             onClick={() => router.push("/login")}
-            className="text-teal-300 hover:text-teal-200 underline-offset-2 hover:underline"
+            className="text-[#0066FF] hover:text-[#0052CC] underline-offset-2 hover:underline"
           >
             Go to login
           </button>

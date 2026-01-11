@@ -132,7 +132,7 @@ export default function LoginPage() {
     <div className="pfm-shell">
       <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-8 text-sm">
         <div className="mb-6 text-center">
-          <p className="text-xs uppercase tracking-[0.2em] text-indigo-300">
+          <p className="text-xs uppercase tracking-[0.2em] text-[#0066FF]">
             ProveForMe Login
           </p>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight">
@@ -164,7 +164,7 @@ export default function LoginPage() {
             <input
               type="email"
               autoComplete="email"
-              className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none focus:border-indigo-400"
+              className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none focus:border-[#0066FF]"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
@@ -178,7 +178,7 @@ export default function LoginPage() {
             <input
               type="password"
               autoComplete="current-password"
-              className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none focus:border-indigo-400"
+              className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none focus:border-[#0066FF]"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Your password"
@@ -188,7 +188,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="mt-2 w-full rounded-md bg-indigo-500 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-2 w-full rounded-md bg-[#0066FF] px-4 py-2 text-xs font-semibold text-white hover:bg-[#0052CC] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Logging in..." : "Log in"}
           </button>
