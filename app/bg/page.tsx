@@ -385,7 +385,44 @@ export default function BgDashboardPage() {
                   </p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-4">
+                  {/* Welcome and instructions */}
+                  <div className="space-y-3">
+                    <p className="text-xs text-gray-700">
+                      Thank you for signing up to be a Boots on the Ground (BG) for ProveForMe.com. Please take a moment to review our{" "}
+                      <a href="/terms" className="underline hover:text-black">Terms of Service</a>,{" "}
+                      <a href="/privacy" className="underline hover:text-black">Privacy Policy</a>, and{" "}
+                      <a href="/training" className="underline hover:text-black">Training page</a> if you have not already.
+                    </p>
+
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-black">Onboarding Instruction Steps:</p>
+                      <ol className="text-[11px] text-gray-700 space-y-1.5 list-decimal list-inside">
+                        <li>
+                          <span className="font-medium">Review photography and video training</span>
+                          <span className="text-gray-500"> — Understand documentation standards and submission requirements.</span>
+                        </li>
+                        <li>
+                          <span className="font-medium">Complete payment setup with Stripe</span>
+                          <span className="text-gray-500"> — Connect your account so payouts process without delay.</span>
+                        </li>
+                        <li>
+                          <span className="font-medium">Enter your service area</span>
+                          <span className="text-gray-500"> — Add the zip codes you are willing to cover.</span>
+                        </li>
+                        <li>
+                          <span className="font-medium">Express interest in available projects</span>
+                          <span className="text-gray-500"> — Select projects you are willing to accept within your service area.</span>
+                        </li>
+                        <li>
+                          <span className="font-medium">Complete assigned visits promptly</span>
+                          <span className="text-gray-500"> — Respond to the investor with required documentation and status updates on time.</span>
+                        </li>
+                      </ol>
+                    </div>
+                  </div>
+
+                  {/* Payment required warning */}
                   <div className="p-3 rounded-md bg-yellow-100 border border-yellow-300">
                     <p className="text-xs text-yellow-800 font-medium">
                       You must complete payment setup before you can be assigned to any project.

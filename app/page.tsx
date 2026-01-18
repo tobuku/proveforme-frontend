@@ -262,7 +262,7 @@ export default function Home() {
               </Link>
             </div>
             <p className="text-[11px] text-slate-500">
-              &copy; 2025 ProveForMe.com All Rights Reserved
+              &copy; 2025 ProveForMe.com. All rights reserved. Owned and operated by Know Leap Strategies.
             </p>
           </div>
         </div>

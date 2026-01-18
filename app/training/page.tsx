@@ -234,7 +234,7 @@ export default function TrainingPage() {
         <div className="mt-12 pt-8 border-t border-slate-200">
           <Link
             href="/"
-            className="text-sm text-[#0066FF] hover:text-[#0052CC]"
+            className="text-sm text-gray-600 hover:text-black"
           >
             &larr; Back to Home
           </Link>
@@ -243,7 +243,7 @@ export default function TrainingPage() {
 
       <footer className="border-t border-slate-200 bg-slate-50">
         <div className="mx-auto max-w-5xl px-4 py-4 text-center text-[11px] text-slate-500">
-          <p>&copy; 2025 ProveForMe.com All Rights Reserved</p>
+          <p>&copy; 2025 ProveForMe.com. All rights reserved. Owned and operated by Know Leap Strategies.</p>
         </div>
       </footer>
     </div>

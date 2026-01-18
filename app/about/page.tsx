@@ -66,7 +66,7 @@ export default function AboutPage() {
 
       <footer className="border-t border-slate-200 bg-slate-50">
         <div className="mx-auto max-w-5xl px-4 py-4 text-center text-[11px] text-slate-500">
-          <p>&copy; 2025 ProveForMe.com All Rights Reserved</p>
+          <p>&copy; 2025 ProveForMe.com. All rights reserved. Owned and operated by Know Leap Strategies.</p>
         </div>
       </footer>
     </div>
