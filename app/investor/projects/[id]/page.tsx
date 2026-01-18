@@ -105,12 +105,12 @@ function CheckoutForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       <PaymentElement />
       {error && (
-        <div className="text-xs text-red-600 dark:text-red-400">{error}</div>
+        <div className="text-xs text-red-600">{error}</div>
       )}
       <button
         type="submit"
         disabled={!stripe || loading}
-        className="w-full rounded-md bg-[#0066FF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0052CC] disabled:opacity-50"
+        className="w-full rounded-md bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50"
       >
         {loading ? "Processing..." : "Pay Now"}
       </button>
@@ -354,7 +354,7 @@ export default function ProjectDetailPage() {
         {/* Back link */}
         <button
           onClick={() => router.push("/investor")}
-          className="mb-4 text-xs text-[#0066FF] hover:underline"
+          className="mb-4 text-xs text-gray-600 hover:underline"
         >
           &larr; Back to Dashboard
         </button>
@@ -363,10 +363,10 @@ export default function ProjectDetailPage() {
         <div className="mb-6">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs uppercase tracking-widest text-[#0066FF]">
+              <p className="text-xs uppercase tracking-widest text-gray-500">
                 {project.city}, {project.state}
               </p>
-              <h1 className="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-50">
+              <h1 className="mt-1 text-xl font-semibold text-black">
                 {project.title}
               </h1>
             </div>
@@ -400,7 +400,7 @@ export default function ProjectDetailPage() {
             )}
           </div>
           {project.description && (
-            <p className="mt-1 text-slate-600 dark:text-slate-300">
+            <p className="mt-1 text-gray-600">
               {project.description}
             </p>
           )}
@@ -411,17 +411,17 @@ export default function ProjectDetailPage() {
 
         {/* Success message */}
         {fundingSuccess && (
-          <div className="mb-6 rounded-md border border-green-300 bg-green-50 px-4 py-3 text-green-800 dark:border-green-700 dark:bg-green-900/30 dark:text-green-200">
+          <div className="mb-6 rounded-md border border-green-300 bg-green-50 px-4 py-3 text-green-800">
             Payment successful! The funds are now held in escrow.
           </div>
         )}
 
         {/* Fund Boots on the Ground Section */}
-        <section className="mb-8 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
-          <h2 className="mb-4 text-sm font-semibold text-slate-900 dark:text-slate-50">
+        <section className="mb-8 rounded-lg border border-gray-300 bg-white p-4">
+          <h2 className="mb-4 text-sm font-semibold text-black">
             Fund Boots on the Ground
           </h2>
-          <p className="mb-4 text-xs text-slate-600 dark:text-slate-400">
+          <p className="mb-4 text-xs text-gray-600">
             Select a BG to assign to this project and fund their visit. Payment will be held in escrow until you release it after the visit is completed.
           </p>
 
@@ -441,7 +441,7 @@ export default function ProjectDetailPage() {
           ) : (
             <div className="space-y-4">
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
+                <label className="mb-1 block text-xs font-medium text-gray-700">
                   Select BG (Boots on the Ground)
                 </label>
                 {(() => {
@@ -466,7 +466,7 @@ export default function ProjectDetailPage() {
                       <select
                         value={selectedBG}
                         onChange={(e) => setSelectedBG(e.target.value)}
-                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700"
+                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black"
                       >
                         <option value="">-- Select a BG --</option>
                         {onboardedBGs.map((bg) => (
@@ -505,7 +505,7 @@ export default function ProjectDetailPage() {
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
+                <label className="mb-1 block text-xs font-medium text-gray-700">
                   Amount ($)
                 </label>
                 <input
@@ -514,12 +514,12 @@ export default function ProjectDetailPage() {
                   min="1"
                   value={fundAmount}
                   onChange={(e) => setFundAmount(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700"
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black"
                 />
               </div>
 
               {fundingError && (
-                <p className="text-xs text-red-600 dark:text-red-400">
+                <p className="text-xs text-red-600">
                   {fundingError}
                 </p>
               )}
@@ -527,7 +527,7 @@ export default function ProjectDetailPage() {
               <button
                 onClick={handleFundProject}
                 disabled={fundingLoading || !selectedBG || !fundAmount}
-                className="w-full rounded-md bg-[#0066FF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0052CC] disabled:opacity-50"
+                className="w-full rounded-md bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50"
               >
                 {fundingLoading ? "Setting up payment..." : "Fund This BG"}
               </button>
@@ -537,21 +537,21 @@ export default function ProjectDetailPage() {
 
         {/* BG Interests Section */}
         {interests.length > 0 && (
-          <section className="mb-8 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-700 dark:bg-blue-900/20">
-            <h2 className="mb-4 text-sm font-semibold text-slate-900 dark:text-slate-50">
+          <section className="mb-8 rounded-lg border border-gray-300 bg-gray-50 p-4">
+            <h2 className="mb-4 text-sm font-semibold text-black">
               Interested BGs ({interests.length})
             </h2>
-            <p className="mb-4 text-xs text-slate-600 dark:text-slate-400">
+            <p className="mb-4 text-xs text-gray-600">
               These Boots on the Ground have expressed interest in this project. You can fund any of them above.
             </p>
             <div className="space-y-3">
               {interests.map((interest) => (
                 <div
                   key={interest.id}
-                  className="flex items-center justify-between rounded-md border border-blue-200 bg-white p-3 dark:border-blue-700 dark:bg-slate-800"
+                  className="flex items-center justify-between rounded-md border border-gray-200 bg-white p-3"
                 >
                   <div>
-                    <p className="text-xs font-medium text-slate-900 dark:text-slate-50">
+                    <p className="text-xs font-medium text-black">
                       {interest.bg.firstName} {interest.bg.lastName}
                     </p>
                     <p className="text-[10px] text-slate-500">
@@ -588,21 +588,21 @@ export default function ProjectDetailPage() {
 
         {/* Payments History */}
         <section>
-          <h2 className="mb-4 text-sm font-semibold text-slate-900 dark:text-slate-50">
+          <h2 className="mb-4 text-sm font-semibold text-black">
             Payment History
           </h2>
 
           {payments.length === 0 ? (
-            <p className="text-xs text-slate-500">No payments yet.</p>
+            <p className="text-xs text-gray-500">No payments yet.</p>
           ) : (
             <div className="space-y-3">
               {payments.map((payment) => (
                 <div
                   key={payment.id}
-                  className="flex items-center justify-between rounded-md border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-800"
+                  className="flex items-center justify-between rounded-md border border-gray-200 bg-white p-3"
                 >
                   <div>
-                    <p className="text-xs font-medium text-slate-900 dark:text-slate-50">
+                    <p className="text-xs font-medium text-black">
                       ${payment.amountTotal.toFixed(2)} to {payment.bg.firstName}{" "}
                       {payment.bg.lastName}
                     </p>
@@ -618,14 +618,14 @@ export default function ProjectDetailPage() {
                     <span
                       className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
                         payment.status === "RELEASED"
-                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                          ? "bg-green-100 text-green-700"
                           : payment.status === "FUNDED"
-                          ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                          ? "bg-gray-200 text-gray-700"
                           : payment.status === "PENDING"
-                          ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300"
+                          ? "bg-yellow-100 text-yellow-700"
                           : payment.status === "FAILED"
-                          ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
-                          : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
+                          ? "bg-red-100 text-red-700"
+                          : "bg-gray-100 text-gray-600"
                       }`}
                     >
                       {payment.status === "PENDING" ? "Awaiting Payment" : payment.status}

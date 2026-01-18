@@ -203,13 +203,13 @@ export default function InvestorDashboardPage() {
       <main className="mx-auto max-w-5xl px-4 py-8 text-sm">
         <div className="mb-6 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-[#0066FF] dark:text-indigo-300">
+            <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
               Investor Dashboard
             </p>
-            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">
+            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-black">
               Welcome {firstName} {lastName}
             </h1>
-            <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+            <p className="mt-1 text-xs text-gray-600">
               Create projects, assign Boots on the Ground, and review visit
               activity from one place.
             </p>
@@ -217,31 +217,31 @@ export default function InvestorDashboardPage() {
 
           <Link
             href="/investor/projects/create"
-            className="inline-flex items-center gap-1 rounded-md bg-[#0066FF] px-3 py-2 text-xs font-semibold text-white hover:bg-[#0052CC]"
+            className="inline-flex items-center gap-1 rounded-md bg-black px-3 py-2 text-xs font-semibold text-white hover:bg-gray-800"
           >
             <span>+ Create project</span>
           </Link>
         </div>
 
         <section className="space-y-3">
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+          <h2 className="text-sm font-semibold text-black">
             Your projects
           </h2>
 
           {loading && (
-            <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-300">
+            <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600">
               Loading projects...
             </div>
           )}
 
           {!loading && error && (
-            <div className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-800 dark:border-slate-700 dark:bg-red-950/40 dark:text-red-200">
+            <div className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-800">
               {error}
             </div>
           )}
 
           {!loading && !error && projects.length === 0 && (
-            <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-3 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-300">
+            <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-3 text-xs text-gray-600">
               You have no projects yet. Once you create a project, it will
               appear here.
             </div>
@@ -253,40 +253,40 @@ export default function InvestorDashboardPage() {
                 <Link
                   href={`/investor/projects/${project.id}`}
                   key={project.id}
-                  className="flex flex-col justify-between rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs text-slate-700 transition-colors hover:border-indigo-300 hover:bg-indigo-50/50 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-300 dark:hover:border-indigo-700 dark:hover:bg-indigo-900/20"
+                  className="flex flex-col justify-between rounded-lg border border-gray-200 bg-white p-4 text-xs text-gray-700 transition-colors hover:border-gray-400 hover:bg-gray-50"
                 >
                   <div className="space-y-1">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#0066FF] dark:text-indigo-300">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">
                       {project.city}, {project.state}
                     </p>
-                    <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                    <h3 className="text-sm font-semibold text-black">
                       {project.title}
                     </h3>
                     {project.fullAddress && (
-                      <p className="text-[11px] font-medium text-slate-700 dark:text-slate-200">
+                      <p className="text-[11px] font-medium text-gray-700">
                         {project.fullAddress}
                       </p>
                     )}
                     {project.description && (
-                      <p className="text-[11px] text-slate-600 dark:text-slate-300">
+                      <p className="text-[11px] text-gray-600">
                         {project.description}
                       </p>
                     )}
                   </div>
-                  <div className="mt-3 flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-300">
+                  <div className="mt-3 flex items-center justify-between text-[11px] text-gray-600">
                     <span>
                       Pay per visit:{" "}
-                      <span className="font-semibold text-slate-900 dark:text-slate-50">
+                      <span className="font-semibold text-black">
                         ${project.payPerVisit}
                       </span>
                     </span>
                     <div className="flex items-center gap-2">
                       {project.status && (
-                        <span className="rounded-full border border-slate-300 px-2 py-0.5 text-[10px] uppercase tracking-wide text-slate-600 dark:border-slate-600 dark:text-slate-200">
+                        <span className="rounded-full border border-gray-300 px-2 py-0.5 text-[10px] uppercase tracking-wide text-gray-600">
                           {project.status}
                         </span>
                       )}
-                      <span className="text-[#0066FF] dark:text-indigo-400">
+                      <span className="text-black font-medium">
                         Fund BG &rarr;
                       </span>
                     </div>

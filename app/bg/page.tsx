@@ -320,19 +320,19 @@ export default function BgDashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-900 text-white p-4 md:p-8">
+    <main className="min-h-screen bg-white text-black p-4 md:p-8">
       <div className="max-w-5xl mx-auto space-y-6">
-        <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-6 rounded-2xl bg-slate-800">
+        <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-6 rounded-2xl bg-gray-100 border border-gray-200">
           <div>
-            <h1 className="text-2xl font-bold">BG Dashboard</h1>
-            <p className="text-xs text-slate-300">
+            <h1 className="text-2xl font-bold text-black">BG Dashboard</h1>
+            <p className="text-xs text-gray-600">
               Find projects in your area and manage your visits.
             </p>
           </div>
           <div className="flex flex-col items-end gap-1 text-[11px]">
             {authUser ? (
               <>
-                <p className="text-slate-200">
+                <p className="text-gray-700">
                   Logged in as{" "}
                   <span className="font-semibold">
                     {authUser.firstName} {authUser.lastName}
@@ -345,13 +345,13 @@ export default function BgDashboardPage() {
                 </p>
                 <button
                   onClick={handleLogout}
-                  className="px-2 py-1 rounded border border-slate-500 bg-slate-700 text-[11px] hover:bg-slate-600"
+                  className="px-2 py-1 rounded border border-gray-400 bg-white text-[11px] hover:bg-gray-100"
                 >
                   Log out
                 </button>
               </>
             ) : (
-              <p className="text-slate-400">
+              <p className="text-gray-500">
                 Not logged in yet. Use{" "}
                 <span className="font-mono">/login</span> to authenticate.
               </p>
@@ -363,30 +363,30 @@ export default function BgDashboardPage() {
           {/* Left Column */}
           <div className="space-y-6">
             {/* Stripe Onboarding Section */}
-            <section className="p-4 rounded-xl bg-slate-800 border border-slate-700 space-y-3">
-              <h2 className="text-sm font-semibold text-slate-200">Payment Setup</h2>
+            <section className="p-4 rounded-xl bg-white border border-gray-300 space-y-3">
+              <h2 className="text-sm font-semibold text-black">Payment Setup</h2>
 
               {stripeStatus?.onboarded ? (
                 <div className="flex items-center gap-2">
                   <span className="inline-block h-2 w-2 rounded-full bg-green-500"></span>
-                  <p className="text-xs text-green-400">
+                  <p className="text-xs text-green-700">
                     Your payment account is set up and ready to receive payments.
                   </p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <p className="text-xs text-slate-300">
+                  <p className="text-xs text-gray-600">
                     To receive payments for your work, you need to set up your Stripe account.
                   </p>
 
                   {stripeError && (
-                    <p className="text-xs text-red-400">{stripeError}</p>
+                    <p className="text-xs text-red-600">{stripeError}</p>
                   )}
 
                   <button
                     onClick={startStripeOnboarding}
                     disabled={stripeLoading}
-                    className="px-4 py-2 rounded bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-500 disabled:opacity-50"
+                    className="px-4 py-2 rounded bg-black text-white text-xs font-semibold hover:bg-gray-800 disabled:opacity-50"
                   >
                     {stripeLoading
                       ? "Starting..."
@@ -399,9 +399,9 @@ export default function BgDashboardPage() {
             </section>
 
             {/* Service Zip Codes Section */}
-            <section className="p-4 rounded-xl bg-slate-800 border border-slate-700 space-y-3">
-              <h2 className="text-sm font-semibold text-slate-200">Service Area (Zip Codes)</h2>
-              <p className="text-xs text-slate-400">
+            <section className="p-4 rounded-xl bg-white border border-gray-300 space-y-3">
+              <h2 className="text-sm font-semibold text-black">Service Area (Zip Codes)</h2>
+              <p className="text-xs text-gray-600">
                 Add the zip codes where you can provide property visits. Projects in these areas will appear below.
               </p>
 
@@ -413,11 +413,11 @@ export default function BgDashboardPage() {
                   onKeyDown={(e) => e.key === "Enter" && addZipCode()}
                   placeholder="Enter zip code"
                   maxLength={10}
-                  className="flex-1 rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none focus:border-[#0066FF]"
+                  className="flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none focus:border-gray-500"
                 />
                 <button
                   onClick={addZipCode}
-                  className="px-3 py-2 rounded bg-[#0066FF] text-white text-xs font-semibold hover:bg-[#0052CC]"
+                  className="px-3 py-2 rounded bg-black text-white text-xs font-semibold hover:bg-gray-800"
                 >
                   Add
                 </button>
@@ -428,12 +428,12 @@ export default function BgDashboardPage() {
                   {serviceZipCodes.map((zip) => (
                     <span
                       key={zip}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-blue-900/50 text-blue-300 text-xs"
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-200 text-gray-700 text-xs"
                     >
                       {zip}
                       <button
                         onClick={() => removeZipCode(zip)}
-                        className="hover:text-red-400"
+                        className="hover:text-red-600"
                       >
                         x
                       </button>
@@ -445,32 +445,32 @@ export default function BgDashboardPage() {
               <button
                 onClick={saveServiceZipCodes}
                 disabled={savingZips}
-                className="px-4 py-2 rounded bg-slate-700 text-white text-xs font-semibold hover:bg-slate-600 disabled:opacity-50"
+                className="px-4 py-2 rounded bg-gray-200 text-black text-xs font-semibold hover:bg-gray-300 disabled:opacity-50"
               >
                 {savingZips ? "Saving..." : "Save Zip Codes"}
               </button>
 
               {zipSaveSuccess && (
-                <p className="text-xs text-green-400">Zip codes saved!</p>
+                <p className="text-xs text-green-600">Zip codes saved!</p>
               )}
             </section>
 
             {/* My Visits Section */}
-            <section className="p-4 rounded-xl bg-slate-800 border border-slate-700 space-y-3">
-              <h2 className="text-sm font-semibold text-slate-200">My Assigned Visits</h2>
+            <section className="p-4 rounded-xl bg-white border border-gray-300 space-y-3">
+              <h2 className="text-sm font-semibold text-black">My Assigned Visits</h2>
 
               {loading && (
-                <p className="text-xs text-slate-400">Loading your visits...</p>
+                <p className="text-xs text-gray-500">Loading your visits...</p>
               )}
 
               {error && (
-                <div className="p-3 rounded bg-red-700/70 text-xs">
+                <div className="p-3 rounded bg-red-100 border border-red-300 text-xs text-red-700">
                   <span className="font-semibold">Error:</span> {error}
                 </div>
               )}
 
               {!loading && !error && visits && visits.length === 0 && (
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-gray-500">
                   You don&apos;t have any assigned visits yet.
                 </p>
               )}
@@ -480,21 +480,21 @@ export default function BgDashboardPage() {
                   {visits.map((v) => (
                     <div
                       key={v.id}
-                      className="p-3 rounded-lg bg-slate-900/80 border border-slate-700 space-y-1"
+                      className="p-3 rounded-lg bg-gray-50 border border-gray-200 space-y-1"
                     >
-                      <p className="text-[11px] text-slate-200">
+                      <p className="text-[11px] text-gray-700">
                         <span className="font-semibold">Status:</span> {v.status}
                       </p>
-                      <p className="text-[11px] text-slate-200">
+                      <p className="text-[11px] text-gray-700">
                         <span className="font-semibold">Project:</span>{" "}
                         {v.project.title} ({v.project.city}, {v.project.state})
                       </p>
                       {v.notes && (
-                        <p className="text-[11px] text-slate-300 mt-1">
+                        <p className="text-[11px] text-gray-600 mt-1">
                           <span className="font-semibold">Notes:</span> {v.notes}
                         </p>
                       )}
-                      <p className="text-[10px] text-slate-500 mt-1">
+                      <p className="text-[10px] text-gray-500 mt-1">
                         Scheduled: {new Date(v.scheduledAt).toLocaleString()}
                       </p>
                     </div>
@@ -505,21 +505,21 @@ export default function BgDashboardPage() {
           </div>
 
           {/* Right Column - Available Projects */}
-          <section className="p-4 rounded-xl bg-slate-800 border border-slate-700 space-y-3">
+          <section className="p-4 rounded-xl bg-white border border-gray-300 space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-200">Available Projects</h2>
+              <h2 className="text-sm font-semibold text-black">Available Projects</h2>
               {serviceZipCodes.length === 0 && (
-                <span className="text-[10px] text-yellow-400">
+                <span className="text-[10px] text-yellow-600">
                   Add zip codes to filter
                 </span>
               )}
             </div>
 
             {projectsLoading ? (
-              <p className="text-xs text-slate-400">Loading projects...</p>
+              <p className="text-xs text-gray-500">Loading projects...</p>
             ) : availableProjects.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-gray-500">
                   {serviceZipCodes.length === 0
                     ? "Add your service zip codes to see available projects in your area."
                     : "No projects available in your service areas yet."}
@@ -530,42 +530,42 @@ export default function BgDashboardPage() {
                 {availableProjects.map((project) => (
                   <div
                     key={project.id}
-                    className="p-4 rounded-lg bg-slate-900/80 border border-slate-700 space-y-2"
+                    className="p-4 rounded-lg bg-gray-50 border border-gray-200 space-y-2"
                   >
                     <div className="flex items-start justify-between">
                       <div>
-                        <p className="text-[10px] uppercase tracking-wider text-[#0066FF]">
+                        <p className="text-[10px] uppercase tracking-wider text-gray-500">
                           {project.city}, {project.state} {project.zipCode && `- ${project.zipCode}`}
                         </p>
-                        <h3 className="text-sm font-semibold text-slate-100">
+                        <h3 className="text-sm font-semibold text-black">
                           {project.title}
                         </h3>
                       </div>
-                      <span className="text-sm font-bold text-green-400">
+                      <span className="text-sm font-bold text-green-700">
                         ${project.payPerVisit}
                       </span>
                     </div>
 
                     {project.description && (
-                      <p className="text-xs text-slate-300">
+                      <p className="text-xs text-gray-600">
                         {project.description}
                       </p>
                     )}
 
                     {project.scopeOfWork && project.scopeOfWork.length > 0 && (
                       <div className="space-y-1">
-                        <p className="text-[10px] font-semibold text-slate-400">Scope of Work:</p>
+                        <p className="text-[10px] font-semibold text-gray-500">Scope of Work:</p>
                         <div className="flex flex-wrap gap-1">
                           {project.scopeOfWork.slice(0, 6).map((item) => (
                             <span
                               key={item}
-                              className="px-1.5 py-0.5 rounded bg-slate-700 text-[9px] text-slate-300"
+                              className="px-1.5 py-0.5 rounded bg-gray-200 text-[9px] text-gray-700"
                             >
                               {item}
                             </span>
                           ))}
                           {project.scopeOfWork.length > 6 && (
-                            <span className="px-1.5 py-0.5 rounded bg-slate-700 text-[9px] text-slate-400">
+                            <span className="px-1.5 py-0.5 rounded bg-gray-200 text-[9px] text-gray-500">
                               +{project.scopeOfWork.length - 6} more
                             </span>
                           )}
@@ -573,8 +573,8 @@ export default function BgDashboardPage() {
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between pt-2 border-t border-slate-700">
-                      <p className="text-[10px] text-slate-500">
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                      <p className="text-[10px] text-gray-500">
                         Posted by {project.investor.firstName} {project.investor.lastName} •{" "}
                         {new Date(project.createdAt).toLocaleDateString()}
                       </p>
@@ -584,7 +584,7 @@ export default function BgDashboardPage() {
                         className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors ${
                           interestSuccess === project.id
                             ? "bg-green-600 text-white"
-                            : "bg-[#0066FF] text-white hover:bg-[#0052CC]"
+                            : "bg-black text-white hover:bg-gray-800"
                         } disabled:opacity-50`}
                       >
                         {expressingInterest === project.id
