@@ -363,21 +363,37 @@ export default function BgDashboardPage() {
           {/* Left Column */}
           <div className="space-y-6">
             {/* Stripe Onboarding Section */}
-            <section className="p-4 rounded-xl bg-white border border-gray-300 space-y-3">
-              <h2 className="text-sm font-semibold text-black">Payment Setup</h2>
+            <section className={`p-4 rounded-xl space-y-3 ${
+              stripeStatus?.onboarded
+                ? "bg-white border border-gray-300"
+                : "bg-yellow-50 border-2 border-yellow-400"
+            }`}>
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-black">Payment Setup</h2>
+                {!stripeStatus?.onboarded && (
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-yellow-400 text-yellow-900">
+                    Required
+                  </span>
+                )}
+              </div>
 
               {stripeStatus?.onboarded ? (
                 <div className="flex items-center gap-2">
                   <span className="inline-block h-2 w-2 rounded-full bg-green-500"></span>
                   <p className="text-xs text-green-700">
-                    Your payment account is set up and ready to receive payments.
+                    Your payment account is set up. You can now be assigned to projects and receive payments.
                   </p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <p className="text-xs text-gray-600">
-                    To receive payments for your work, you need to set up your Stripe account.
-                  </p>
+                  <div className="p-3 rounded-md bg-yellow-100 border border-yellow-300">
+                    <p className="text-xs text-yellow-800 font-medium">
+                      You must complete payment setup before you can be assigned to any project.
+                    </p>
+                    <p className="text-[11px] text-yellow-700 mt-1">
+                      Even if you express interest in a project, Investors cannot fund you until your payment account is ready.
+                    </p>
+                  </div>
 
                   {stripeError && (
                     <p className="text-xs text-red-600">{stripeError}</p>
@@ -386,7 +402,7 @@ export default function BgDashboardPage() {
                   <button
                     onClick={startStripeOnboarding}
                     disabled={stripeLoading}
-                    className="px-4 py-2 rounded bg-black text-white text-xs font-semibold hover:bg-gray-800 disabled:opacity-50"
+                    className="w-full px-4 py-2.5 rounded bg-black text-white text-xs font-semibold hover:bg-gray-800 disabled:opacity-50"
                   >
                     {stripeLoading
                       ? "Starting..."
@@ -573,26 +589,33 @@ export default function BgDashboardPage() {
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-                      <p className="text-[10px] text-gray-500">
-                        Posted by {project.investor.firstName} {project.investor.lastName} •{" "}
-                        {new Date(project.createdAt).toLocaleDateString()}
-                      </p>
-                      <button
-                        onClick={() => expressInterest(project.id)}
-                        disabled={expressingInterest === project.id || interestSuccess === project.id}
-                        className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors ${
-                          interestSuccess === project.id
-                            ? "bg-green-600 text-white"
-                            : "bg-black text-white hover:bg-gray-800"
-                        } disabled:opacity-50`}
-                      >
-                        {expressingInterest === project.id
-                          ? "Sending..."
-                          : interestSuccess === project.id
-                          ? "Interest Sent!"
-                          : "Express Interest"}
-                      </button>
+                    <div className="pt-2 border-t border-gray-200 space-y-2">
+                      {!stripeStatus?.onboarded && (
+                        <p className="text-[10px] text-yellow-700 bg-yellow-50 px-2 py-1 rounded">
+                          Complete payment setup above before you can be assigned to this project.
+                        </p>
+                      )}
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] text-gray-500">
+                          Posted by {project.investor.firstName} {project.investor.lastName} •{" "}
+                          {new Date(project.createdAt).toLocaleDateString()}
+                        </p>
+                        <button
+                          onClick={() => expressInterest(project.id)}
+                          disabled={expressingInterest === project.id || interestSuccess === project.id}
+                          className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors ${
+                            interestSuccess === project.id
+                              ? "bg-green-600 text-white"
+                              : "bg-black text-white hover:bg-gray-800"
+                          } disabled:opacity-50`}
+                        >
+                          {expressingInterest === project.id
+                            ? "Sending..."
+                            : interestSuccess === project.id
+                            ? "Interest Sent!"
+                            : "Express Interest"}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
