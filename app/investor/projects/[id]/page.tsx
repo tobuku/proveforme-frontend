@@ -14,9 +14,8 @@ import { AuthedHeader } from "../../../../components/AuthedHeader";
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
 
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ""
-);
+const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "";
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 type Project = {
   id: string;
@@ -80,39 +79,52 @@ function CheckoutForm({
   const elements = useElements();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!stripe || !elements) return;
+    if (!stripe || !elements) {
+      setError("Payment system not ready. Please wait a moment and try again.");
+      return;
+    }
 
     setLoading(true);
     setError(null);
 
-    const { error: submitError } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: window.location.href + "?payment=success",
-      },
-    });
+    try {
+      const { error: submitError } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: window.location.href + "?payment=success",
+        },
+      });
 
-    if (submitError) {
-      setError(submitError.message || "Payment failed");
+      if (submitError) {
+        setError(submitError.message || "Payment failed");
+        setLoading(false);
+      }
+      // If no error, the page will redirect to return_url
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again.");
       setLoading(false);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <PaymentElement />
+      <PaymentElement onReady={() => setReady(true)} />
+      {!ready && (
+        <div className="text-xs text-gray-500">Loading payment form...</div>
+      )}
       {error && (
         <div className="text-xs text-red-600">{error}</div>
       )}
       <button
         type="submit"
-        disabled={!stripe || loading}
+        disabled={!stripe || !elements || !ready || loading}
         className="w-full rounded-md bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50"
       >
-        {loading ? "Processing..." : "Pay Now"}
+        {!ready ? "Loading..." : loading ? "Processing..." : "Pay Now"}
       </button>
     </form>
   );
@@ -426,18 +438,24 @@ export default function ProjectDetailPage() {
           </p>
 
           {clientSecret ? (
-            <Elements
-              stripe={stripePromise}
-              options={{
-                clientSecret,
-                appearance: { theme: "stripe" },
-              }}
-            >
-              <CheckoutForm
-                clientSecret={clientSecret}
-                onSuccess={() => setFundingSuccess(true)}
-              />
-            </Elements>
+            !stripePromise ? (
+              <div className="text-xs text-red-600">
+                Payment system not configured. Please contact support.
+              </div>
+            ) : (
+              <Elements
+                stripe={stripePromise}
+                options={{
+                  clientSecret,
+                  appearance: { theme: "stripe" },
+                }}
+              >
+                <CheckoutForm
+                  clientSecret={clientSecret}
+                  onSuccess={() => setFundingSuccess(true)}
+                />
+              </Elements>
+            )
           ) : (
             <div className="space-y-4">
               <div>

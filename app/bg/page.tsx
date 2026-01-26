@@ -87,7 +87,7 @@ export default function BgDashboardPage() {
   const [availableProjects, setAvailableProjects] = useState<AvailableProject[]>([]);
   const [projectsLoading, setProjectsLoading] = useState(false);
   const [expressingInterest, setExpressingInterest] = useState<string | null>(null);
-  const [interestSuccess, setInterestSuccess] = useState<string | null>(null);
+  const [expressedInterests, setExpressedInterests] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -206,7 +206,6 @@ export default function BgDashboardPage() {
     if (!authToken) return;
 
     setExpressingInterest(projectId);
-    setInterestSuccess(null);
 
     try {
       const res = await fetch(`${API_BASE}/api/v1/projects/${projectId}/interest`, {
@@ -218,8 +217,8 @@ export default function BgDashboardPage() {
       });
 
       if (res.ok) {
-        setInterestSuccess(projectId);
-        setTimeout(() => setInterestSuccess(null), 3000);
+        // Add to expressed interests set (persists for the session)
+        setExpressedInterests((prev) => new Set(prev).add(projectId));
       }
     } catch (err) {
       console.error("Failed to express interest:", err);
@@ -639,16 +638,16 @@ export default function BgDashboardPage() {
                         </p>
                         <button
                           onClick={() => expressInterest(project.id)}
-                          disabled={expressingInterest === project.id || interestSuccess === project.id}
+                          disabled={expressingInterest === project.id || expressedInterests.has(project.id)}
                           className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors ${
-                            interestSuccess === project.id
-                              ? "bg-green-600 text-white"
+                            expressedInterests.has(project.id)
+                              ? "bg-green-600 text-white cursor-default"
                               : "bg-black text-white hover:bg-gray-800"
                           } disabled:opacity-50`}
                         >
                           {expressingInterest === project.id
                             ? "Sending..."
-                            : interestSuccess === project.id
+                            : expressedInterests.has(project.id)
                             ? "Interest Sent!"
                             : "Express Interest"}
                         </button>
