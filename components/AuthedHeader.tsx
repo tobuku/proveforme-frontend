@@ -63,8 +63,10 @@ export function AuthedHeader({ role: propRole }: AuthedHeaderProps) {
 
   if (role === "INVESTOR") {
     navItems.push({ href: "/investor", label: "Investor dashboard" });
+    navItems.push({ href: "/account", label: "My Account" });
   } else if (role === "BG") {
     navItems.push({ href: "/bg", label: "BG dashboard" });
+    navItems.push({ href: "/account", label: "My Account" });
   } else {
     navItems.push({ href: "/login", label: "Log in" });
     navItems.push({ href: "/register", label: "Register" });
