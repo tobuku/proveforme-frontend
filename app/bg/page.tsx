@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AuthedHeader } from "../../components/AuthedHeader";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
@@ -357,44 +358,21 @@ export default function BgDashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white text-black p-4 md:p-8">
-      <div className="max-w-5xl mx-auto space-y-6">
-        <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-6 rounded-2xl bg-gray-100 border border-gray-200">
-          <div>
+    <div className="pfm-shell">
+      <AuthedHeader role="BG" />
+      <main className="min-h-screen bg-white text-black p-4 md:p-8">
+        <div className="max-w-5xl mx-auto space-y-6">
+          <div className="p-6 rounded-2xl bg-gray-100 border border-gray-200">
             <h1 className="text-2xl font-bold text-black">BG Dashboard</h1>
             <p className="text-xs text-gray-600">
               Find projects in your area and manage your visits.
             </p>
-          </div>
-          <div className="flex flex-col items-end gap-1 text-[11px]">
-            {authUser ? (
-              <>
-                <p className="text-gray-700">
-                  Logged in as{" "}
-                  <span className="font-semibold">
-                    {authUser.firstName} {authUser.lastName}
-                  </span>{" "}
-                  (
-                  <span className="font-mono">
-                    {(authUser.role || "").toString().toUpperCase()}
-                  </span>
-                  )
-                </p>
-                <button
-                  onClick={handleLogout}
-                  className="px-2 py-1 rounded border border-gray-400 bg-white text-[11px] hover:bg-gray-100"
-                >
-                  Log out
-                </button>
-              </>
-            ) : (
-              <p className="text-gray-500">
-                Not logged in yet. Use{" "}
-                <span className="font-mono">/login</span> to authenticate.
+            {authUser && (
+              <p className="text-xs text-gray-500 mt-2">
+                Logged in as <span className="font-semibold">{authUser.firstName} {authUser.lastName}</span>
               </p>
             )}
           </div>
-        </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column */}
@@ -766,5 +744,6 @@ export default function BgDashboardPage() {
         </div>
       </div>
     </main>
+    </div>
   );
 }
