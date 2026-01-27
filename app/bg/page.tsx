@@ -63,6 +63,26 @@ type BgVisitsResponse = {
   visits: VisitForBg[];
 };
 
+type EarningsData = {
+  totalEarnings: number;
+  inEscrow: number;
+  pendingPayments: number;
+  fundedPayments: number;
+  releasedPayments: number;
+  recentPayments: {
+    id: string;
+    amountToBG: number;
+    status: string;
+    createdAt: string;
+    project: {
+      id: string;
+      title: string;
+      city: string;
+      state: string;
+    };
+  }[];
+};
+
 export default function BgDashboardPage() {
   const router = useRouter();
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
@@ -88,6 +108,9 @@ export default function BgDashboardPage() {
   const [projectsLoading, setProjectsLoading] = useState(false);
   const [expressingInterest, setExpressingInterest] = useState<string | null>(null);
   const [expressedInterests, setExpressedInterests] = useState<Set<string>>(new Set());
+
+  // Earnings state
+  const [earnings, setEarnings] = useState<EarningsData | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -120,6 +143,7 @@ export default function BgDashboardPage() {
       fetchStripeStatus(token);
       fetchUserProfile(token);
       fetchAvailableProjects(token);
+      fetchEarnings(token);
     } catch {
       setError("Failed to read login info. Try logging in again.");
       setLoading(false);
@@ -238,6 +262,20 @@ export default function BgDashboardPage() {
       }
     } catch (err) {
       console.error("Failed to fetch Stripe status:", err);
+    }
+  }
+
+  async function fetchEarnings(token: string) {
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/payments/my-earnings`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setEarnings(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch earnings:", err);
     }
   }
 
@@ -449,6 +487,73 @@ export default function BgDashboardPage() {
                 </div>
               )}
             </section>
+
+            {/* Earnings Section */}
+            {stripeStatus?.onboarded && earnings && (
+              <section className="p-4 rounded-xl bg-white border border-gray-300 space-y-3">
+                <h2 className="text-sm font-semibold text-black">My Earnings</h2>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 rounded-lg bg-green-50 border border-green-200 text-center">
+                    <p className="text-xl font-bold text-green-700">
+                      ${earnings.totalEarnings.toFixed(2)}
+                    </p>
+                    <p className="text-[10px] uppercase tracking-wider text-green-600">
+                      Total Earned
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 text-center">
+                    <p className="text-xl font-bold text-blue-700">
+                      ${earnings.inEscrow.toFixed(2)}
+                    </p>
+                    <p className="text-[10px] uppercase tracking-wider text-blue-600">
+                      In Escrow
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex justify-center gap-4 text-center">
+                  <div>
+                    <p className="text-lg font-semibold text-gray-700">{earnings.fundedPayments}</p>
+                    <p className="text-[10px] text-gray-500">Pending Release</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-semibold text-gray-700">{earnings.releasedPayments}</p>
+                    <p className="text-[10px] text-gray-500">Completed</p>
+                  </div>
+                </div>
+
+                {earnings.recentPayments && earnings.recentPayments.length > 0 && (
+                  <div className="space-y-2 pt-2 border-t border-gray-200">
+                    <p className="text-[10px] font-semibold text-gray-500 uppercase">Recent Payments</p>
+                    <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                      {earnings.recentPayments.slice(0, 5).map((payment) => (
+                        <div
+                          key={payment.id}
+                          className="flex items-center justify-between text-xs p-2 rounded bg-gray-50"
+                        >
+                          <div>
+                            <p className="font-medium text-gray-800">{payment.project.title}</p>
+                            <p className="text-[10px] text-gray-500">
+                              {payment.project.city}, {payment.project.state}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-semibold text-green-700">${payment.amountToBG.toFixed(2)}</p>
+                            <p className={`text-[9px] ${
+                              payment.status === "RELEASED" ? "text-green-600" :
+                              payment.status === "FUNDED" ? "text-blue-600" : "text-gray-500"
+                            }`}>
+                              {payment.status}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </section>
+            )}
 
             {/* Service Zip Codes Section */}
             <section className="p-4 rounded-xl bg-white border border-gray-300 space-y-3">
