@@ -16,6 +16,13 @@ type AuthUser = {
   role: "INVESTOR" | "BG";
 };
 
+type AssignedBG = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+};
+
 type Project = {
   id: string;
   investorId?: string;
@@ -27,6 +34,12 @@ type Project = {
   payPerVisit: string;
   status?: string | null;
   createdAt?: string;
+  // Enhanced fields from updated API
+  assignedBG?: AssignedBG | null;
+  fundedCount?: number;
+  releasedCount?: number;
+  totalPaid?: number;
+  interestedBGCount?: number;
 };
 
 type LegacyProjectsEnvelope = {
@@ -170,6 +183,12 @@ export default function InvestorDashboardPage() {
             p.createdAt === undefined || p.createdAt === null
               ? undefined
               : String(p.createdAt),
+          // Enhanced fields
+          assignedBG: p.assignedBG || null,
+          fundedCount: p.fundedCount || 0,
+          releasedCount: p.releasedCount || 0,
+          totalPaid: p.totalPaid || 0,
+          interestedBGCount: p.interestedBGCount || 0,
         }));
 
         // Frontend safety filter so each investor only sees their own projects
@@ -195,6 +214,20 @@ export default function InvestorDashboardPage() {
 
   const firstName = (authUser?.firstName || "").trim() || "Investor";
   const lastName = (authUser?.lastName || "").trim() || "";
+
+  // Compute project status for display
+  function getProjectDisplayStatus(project: Project) {
+    if ((project.releasedCount || 0) > 0) {
+      return { label: "Completed", color: "bg-green-100 text-green-700 border-green-200" };
+    }
+    if ((project.fundedCount || 0) > 0) {
+      return { label: "In Progress", color: "bg-blue-100 text-blue-700 border-blue-200" };
+    }
+    if ((project.interestedBGCount || 0) > 0) {
+      return { label: "BGs Interested", color: "bg-yellow-100 text-yellow-700 border-yellow-200" };
+    }
+    return { label: "Open", color: "bg-gray-100 text-gray-600 border-gray-200" };
+  }
 
   return (
     <div className="pfm-shell">
@@ -249,50 +282,86 @@ export default function InvestorDashboardPage() {
 
           {!loading && !error && projects.length > 0 && (
             <div className="grid gap-3 md:grid-cols-2">
-              {projects.map((project) => (
-                <Link
-                  href={`/investor/projects/${project.id}`}
-                  key={project.id}
-                  className="flex flex-col justify-between rounded-lg border border-gray-200 bg-white p-4 text-xs text-gray-700 transition-colors hover:border-gray-400 hover:bg-gray-50"
-                >
-                  <div className="space-y-1">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">
-                      {project.city}, {project.state}
-                    </p>
-                    <h3 className="text-sm font-semibold text-black">
-                      {project.title}
-                    </h3>
-                    {project.fullAddress && (
-                      <p className="text-[11px] font-medium text-gray-700">
-                        {project.fullAddress}
-                      </p>
-                    )}
-                    {project.description && (
-                      <p className="text-[11px] text-gray-600">
-                        {project.description}
-                      </p>
-                    )}
-                  </div>
-                  <div className="mt-3 flex items-center justify-between text-[11px] text-gray-600">
-                    <span>
-                      Pay per visit:{" "}
-                      <span className="font-semibold text-black">
-                        ${project.payPerVisit}
-                      </span>
-                    </span>
-                    <div className="flex items-center gap-2">
-                      {project.status && (
-                        <span className="rounded-full border border-gray-300 px-2 py-0.5 text-[10px] uppercase tracking-wide text-gray-600">
-                          {project.status}
+              {projects.map((project) => {
+                const displayStatus = getProjectDisplayStatus(project);
+                const hasBG = project.assignedBG !== null;
+
+                return (
+                  <Link
+                    href={`/investor/projects/${project.id}`}
+                    key={project.id}
+                    className="flex flex-col justify-between rounded-lg border border-gray-200 bg-white p-4 text-xs text-gray-700 transition-colors hover:border-gray-400 hover:bg-gray-50"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500">
+                            {project.city}, {project.state}
+                          </p>
+                          <h3 className="text-sm font-semibold text-black">
+                            {project.title}
+                          </h3>
+                        </div>
+                        <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${displayStatus.color}`}>
+                          {displayStatus.label}
                         </span>
+                      </div>
+
+                      {project.fullAddress && (
+                        <p className="text-[11px] font-medium text-gray-700">
+                          {project.fullAddress}
+                        </p>
                       )}
+
+                      {project.description && (
+                        <p className="text-[11px] text-gray-600 line-clamp-2">
+                          {project.description}
+                        </p>
+                      )}
+
+                      {/* Assigned BG Info */}
+                      {hasBG && project.assignedBG && (
+                        <div className="rounded-md bg-blue-50 px-3 py-2 border border-blue-100">
+                          <p className="text-[10px] uppercase tracking-wider text-blue-600 font-medium">
+                            Assigned BG
+                          </p>
+                          <p className="text-[11px] text-blue-800 font-semibold">
+                            {project.assignedBG.firstName} {project.assignedBG.lastName}
+                          </p>
+                          <p className="text-[10px] text-blue-600">
+                            {project.assignedBG.email}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Interested BGs count (if no assignment yet) */}
+                      {!hasBG && (project.interestedBGCount || 0) > 0 && (
+                        <div className="rounded-md bg-yellow-50 px-3 py-2 border border-yellow-100">
+                          <p className="text-[11px] text-yellow-800">
+                            <span className="font-semibold">{project.interestedBGCount}</span> BG{project.interestedBGCount === 1 ? "" : "s"} interested
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-600">
+                      <div className="flex items-center gap-3">
+                        <span>
+                          <span className="font-semibold text-black">${project.payPerVisit}</span>/visit
+                        </span>
+                        {(project.totalPaid || 0) > 0 && (
+                          <span className="text-green-600">
+                            ${project.totalPaid?.toFixed(2)} paid
+                          </span>
+                        )}
+                      </div>
                       <span className="text-black font-medium">
-                        Fund BG &rarr;
+                        {hasBG ? "View Details" : "Fund BG"} &rarr;
                       </span>
                     </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           )}
         </section>
