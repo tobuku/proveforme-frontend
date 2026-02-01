@@ -176,6 +176,9 @@ export default function BgDashboardPage() {
       if (res.ok) {
         const data = await res.json();
         setAvailableProjects(data.projects || []);
+        if (data.interestedProjectIds && data.interestedProjectIds.length > 0) {
+          setExpressedInterests(new Set(data.interestedProjectIds));
+        }
       }
     } catch (err) {
       console.error("Failed to fetch available projects:", err);
