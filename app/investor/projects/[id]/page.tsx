@@ -68,6 +68,101 @@ type BgInterest = {
   };
 };
 
+type VisitForProject = {
+  id: string;
+  scheduledAt: string;
+  status: string;
+  notes: string | null;
+  createdAt: string;
+  bg: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
+};
+
+function VisitsSection({ projectId }: { projectId: string }) {
+  const router = useRouter();
+  const [visits, setVisits] = useState<VisitForProject[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      const token = localStorage.getItem("pfm_token");
+      if (!token) return;
+      try {
+        const res = await fetch(
+          `${API_BASE}/api/v1/visits/project/${projectId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setVisits(data.visits || []);
+        }
+      } catch (err) {
+        console.error("Failed to load visits:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [projectId]);
+
+  return (
+    <section className="mb-8 rounded-lg border border-gray-300 bg-white p-4">
+      <h2 className="mb-4 text-sm font-semibold text-black">
+        Visits {!loading && visits.length > 0 && `(${visits.length})`}
+      </h2>
+
+      {loading ? (
+        <p className="text-xs text-gray-500">Loading visits...</p>
+      ) : visits.length === 0 ? (
+        <p className="text-xs text-gray-500">No visits scheduled yet.</p>
+      ) : (
+        <div className="space-y-2">
+          {visits.map((v) => (
+            <div
+              key={v.id}
+              onClick={() => router.push(`/visits/${v.id}`)}
+              className="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 p-3 cursor-pointer hover:border-gray-400 transition-colors"
+            >
+              <div>
+                <p className="text-xs font-medium text-black">
+                  {v.bg.firstName} {v.bg.lastName}
+                </p>
+                <p className="text-[10px] text-gray-500">
+                  Scheduled: {new Date(v.scheduledAt).toLocaleString()}
+                </p>
+                {v.notes && (
+                  <p className="text-[10px] text-gray-400 mt-0.5 italic truncate max-w-xs">
+                    {v.notes}
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                    v.status === "COMPLETED"
+                      ? "bg-green-100 text-green-700"
+                      : v.status === "SCHEDULED"
+                      ? "bg-blue-100 text-blue-700"
+                      : "bg-gray-100 text-gray-600"
+                  }`}
+                >
+                  {v.status}
+                </span>
+                <span className="text-[10px] text-blue-600 font-medium">
+                  View &rarr;
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function CheckoutForm({
   clientSecret,
   onSuccess,
@@ -603,6 +698,9 @@ export default function ProjectDetailPage() {
             </div>
           </section>
         )}
+
+        {/* Visits Section */}
+        <VisitsSection projectId={projectId} />
 
         {/* Payments History */}
         <section>

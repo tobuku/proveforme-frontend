@@ -615,7 +615,8 @@ export default function BgDashboardPage() {
                   {visits.map((v) => (
                     <div
                       key={v.id}
-                      className="p-3 rounded-lg bg-gray-50 border border-gray-200 space-y-1"
+                      onClick={() => router.push(`/visits/${v.id}`)}
+                      className="p-3 rounded-lg bg-gray-50 border border-gray-200 space-y-1 cursor-pointer hover:border-gray-400 transition-colors"
                     >
                       <p className="text-[11px] text-gray-700">
                         <span className="font-semibold">Status:</span> {v.status}
@@ -631,6 +632,9 @@ export default function BgDashboardPage() {
                       )}
                       <p className="text-[10px] text-gray-500 mt-1">
                         Scheduled: {new Date(v.scheduledAt).toLocaleString()}
+                      </p>
+                      <p className="text-[10px] text-blue-600 mt-1 font-medium">
+                        View Details &rarr;
                       </p>
                     </div>
                   ))}
