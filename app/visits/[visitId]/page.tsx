@@ -53,6 +53,9 @@ export default function VisitDetailPage() {
   // Delete state
   const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null);
 
+  // Lightbox state
+  const [lightboxPhoto, setLightboxPhoto] = useState<Photo | null>(null);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const token = localStorage.getItem("pfm_token");
@@ -304,19 +307,31 @@ export default function VisitDetailPage() {
                   <img
                     src={photo.filePath}
                     alt={photo.originalName}
-                    className="w-full h-40 object-cover"
+                    onClick={() => setLightboxPhoto(photo)}
+                    className="w-full h-40 object-cover cursor-pointer"
                   />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-end justify-between p-2 opacity-0 group-hover:opacity-100">
-                    <p className="text-[10px] text-white truncate max-w-[70%]">
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-end justify-between p-2 opacity-0 group-hover:opacity-100 pointer-events-none">
+                    <p className="text-[10px] text-white truncate max-w-[60%]">
                       {photo.originalName}
                     </p>
-                    <button
-                      onClick={() => handleDeletePhoto(photo.id)}
-                      disabled={deletingPhotoId === photo.id}
-                      className="rounded bg-red-600 px-2 py-0.5 text-[10px] font-semibold text-white hover:bg-red-500 disabled:opacity-50"
-                    >
-                      {deletingPhotoId === photo.id ? "..." : "Delete"}
-                    </button>
+                    <div className="flex gap-1 pointer-events-auto">
+                      <a
+                        href={photo.filePath}
+                        download={photo.originalName}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded bg-white px-2 py-0.5 text-[10px] font-semibold text-black hover:bg-gray-200"
+                      >
+                        Download
+                      </a>
+                      <button
+                        onClick={() => handleDeletePhoto(photo.id)}
+                        disabled={deletingPhotoId === photo.id}
+                        className="rounded bg-red-600 px-2 py-0.5 text-[10px] font-semibold text-white hover:bg-red-500 disabled:opacity-50"
+                      >
+                        {deletingPhotoId === photo.id ? "..." : "Delete"}
+                      </button>
+                    </div>
                   </div>
                   <p className="px-2 py-1 text-[10px] text-gray-500 truncate">
                     {new Date(photo.createdAt).toLocaleDateString()}
@@ -326,6 +341,47 @@ export default function VisitDetailPage() {
             </div>
           )}
         </section>
+
+        {/* Lightbox */}
+        {lightboxPhoto && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+            onClick={() => setLightboxPhoto(null)}
+          >
+            <div
+              className="relative max-w-4xl max-h-[90vh] mx-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={lightboxPhoto.filePath}
+                alt={lightboxPhoto.originalName}
+                className="max-w-full max-h-[85vh] object-contain rounded"
+              />
+              <div className="flex items-center justify-between mt-2">
+                <p className="text-xs text-white truncate">
+                  {lightboxPhoto.originalName}
+                </p>
+                <div className="flex gap-2">
+                  <a
+                    href={lightboxPhoto.filePath}
+                    download={lightboxPhoto.originalName}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded bg-white px-3 py-1 text-xs font-semibold text-black hover:bg-gray-200"
+                  >
+                    Download
+                  </a>
+                  <button
+                    onClick={() => setLightboxPhoto(null)}
+                    className="rounded bg-gray-700 px-3 py-1 text-xs font-semibold text-white hover:bg-gray-600"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

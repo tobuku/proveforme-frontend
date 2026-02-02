@@ -648,8 +648,8 @@ export default function ProjectDetailPage() {
           )}
         </section>
 
-        {/* BG Interests Section */}
-        {interests.length > 0 && (
+        {/* BG Interests Section — hidden once a BG is funded */}
+        {interests.length > 0 && !payments.some((p) => p.status === "FUNDED" || p.status === "HELD" || p.status === "RELEASED") && (
           <section className="mb-8 rounded-lg border border-gray-300 bg-gray-50 p-4">
             <h2 className="mb-4 text-sm font-semibold text-black">
               Interested BGs ({interests.length})
