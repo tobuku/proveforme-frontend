@@ -74,6 +74,7 @@ type VisitForProject = {
   status: string;
   notes: string | null;
   createdAt: string;
+  photoCount: number;
   bg: {
     id: string;
     firstName: string;
@@ -129,6 +130,11 @@ function VisitsSection({ projectId }: { projectId: string }) {
               <div>
                 <p className="text-xs font-medium text-black">
                   {v.bg.firstName} {v.bg.lastName}
+                  {v.photoCount > 0 && (
+                    <span className="ml-2 text-[10px] font-normal text-gray-500">
+                      {v.photoCount} Photo{v.photoCount !== 1 ? "s" : ""}
+                    </span>
+                  )}
                 </p>
                 <p className="text-[10px] text-gray-500">
                   Scheduled: {new Date(v.scheduledAt).toLocaleString()}
@@ -152,7 +158,7 @@ function VisitsSection({ projectId }: { projectId: string }) {
                   {v.status}
                 </span>
                 <span className="text-[10px] text-blue-600 font-medium">
-                  View &rarr;
+                  {v.photoCount > 0 ? "View Photos" : "View Details"} &rarr;
                 </span>
               </div>
             </div>
