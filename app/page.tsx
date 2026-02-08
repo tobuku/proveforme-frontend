@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AuthedHeader } from "../components/AuthedHeader";
 
-type Role = "INVESTOR" | "BG";
+type Role = "INVESTOR" | "BG" | "ADMIN";
 
 type AuthUser = {
   id: string;
@@ -36,7 +36,12 @@ export default function Home() {
     }
   }, []);
 
-  const dashboardHref = authUser?.role === "BG" ? "/bg" : "/investor";
+  const dashboardHref =
+    authUser?.role === "ADMIN"
+      ? "/admin"
+      : authUser?.role === "BG"
+        ? "/bg"
+        : "/investor";
 
   const fullName =
     ((authUser?.firstName || "").trim() +
@@ -88,7 +93,11 @@ export default function Home() {
                 <p>
                   You are logged in as{" "}
                   <span className="font-semibold">{fullName}</span>{" "}
-                  {authUser.role === "INVESTOR" ? "(Investor)" : "(BG)"}.
+                  {authUser.role === "INVESTOR"
+                    ? "(Investor)"
+                    : authUser.role === "ADMIN"
+                      ? "(Admin)"
+                      : "(BG)"}.
                   <span className="ml-1">
                     Go to{" "}
                     <Link

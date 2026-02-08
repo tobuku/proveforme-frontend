@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
 
-type LoginRole = "INVESTOR" | "BG";
+type LoginRole = "INVESTOR" | "BG" | "ADMIN";
 
 type LoginResponse = {
   ok: boolean;
@@ -50,6 +50,8 @@ export default function LoginPage() {
           router.replace("/investor");
         } else if (role === "BG") {
           router.replace("/bg");
+        } else if (role === "ADMIN") {
+          router.replace("/admin");
         } else {
           // Unknown role, clear and let them log in fresh
           localStorage.removeItem("pfm_token");
@@ -116,6 +118,8 @@ export default function LoginPage() {
         router.replace("/investor");
       } else if (data.user.role === "BG") {
         router.replace("/bg");
+      } else if (data.user.role === "ADMIN") {
+        router.replace("/admin");
       } else {
         // Fallback: go to homepage if an unknown role somehow appears
         router.replace("/");

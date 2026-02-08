@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-type UserRole = "INVESTOR" | "BG" | null;
+type UserRole = "INVESTOR" | "BG" | "ADMIN" | null;
 
 type AuthedHeaderProps = {
   /**
@@ -33,7 +33,7 @@ export function AuthedHeader({ role: propRole }: AuthedHeaderProps) {
       if (typeof window === "undefined") return;
 
       const storedRole = localStorage.getItem("pfm_role");
-      if (storedRole === "INVESTOR" || storedRole === "BG") {
+      if (storedRole === "INVESTOR" || storedRole === "BG" || storedRole === "ADMIN") {
         setRole(storedRole);
       } else {
         setRole(null);
@@ -67,12 +67,15 @@ export function AuthedHeader({ role: propRole }: AuthedHeaderProps) {
   } else if (role === "BG") {
     navItems.push({ href: "/bg", label: "BG dashboard" });
     navItems.push({ href: "/account", label: "My Account" });
+  } else if (role === "ADMIN") {
+    navItems.push({ href: "/admin", label: "Admin Dashboard" });
+    navItems.push({ href: "/account", label: "My Account" });
   } else {
     navItems.push({ href: "/login", label: "Log in" });
     navItems.push({ href: "/register", label: "Register" });
   }
 
-  const showLogout = role === "INVESTOR" || role === "BG";
+  const showLogout = role === "INVESTOR" || role === "BG" || role === "ADMIN";
 
   return (
     <header className="border-b border-slate-200 bg-white/90 backdrop-blur">
