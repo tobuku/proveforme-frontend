@@ -27,6 +27,8 @@ function OnboardContent() {
   const isSuccess = searchParams.get("success") === "true";
   const isRefresh = searchParams.get("refresh") === "true";
 
+  useEffect(() => { document.title = "Payment Setup \u2014 ProveForMe"; }, []);
+
   useEffect(() => {
     const token = localStorage.getItem("pfm_token");
 

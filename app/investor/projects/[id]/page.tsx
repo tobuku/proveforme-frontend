@@ -258,6 +258,8 @@ export default function ProjectDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
 
+  useEffect(() => { document.title = "Project Details \u2014 ProveForMe"; }, []);
+
   // Check for payment success in URL
   useEffect(() => {
     if (typeof window !== "undefined") {

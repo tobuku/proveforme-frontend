@@ -63,6 +63,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => { document.title = "Admin Dashboard \u2014 ProveForMe"; }, []);
+
   useEffect(() => {
     const role = localStorage.getItem("pfm_role");
     if (role !== "ADMIN") {

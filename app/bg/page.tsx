@@ -113,6 +113,8 @@ export default function BgDashboardPage() {
   // Earnings state
   const [earnings, setEarnings] = useState<EarningsData | null>(null);
 
+  useEffect(() => { document.title = "BG Dashboard \u2014 ProveForMe"; }, []);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
 

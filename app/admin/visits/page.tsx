@@ -46,6 +46,8 @@ export default function AdminVisitsPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
 
+  useEffect(() => { document.title = "View Visits \u2014 ProveForMe"; }, []);
+
   useEffect(() => {
     const role = localStorage.getItem("pfm_role");
     if (role !== "ADMIN") {

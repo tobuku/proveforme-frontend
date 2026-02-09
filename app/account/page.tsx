@@ -62,6 +62,8 @@ export default function AccountPage() {
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
+  useEffect(() => { document.title = "My Account \u2014 ProveForMe"; }, []);
+
   useEffect(() => {
     async function loadProfile() {
       if (typeof window === "undefined") return;

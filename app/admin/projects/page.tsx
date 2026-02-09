@@ -50,6 +50,8 @@ export default function AdminProjectsPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
 
+  useEffect(() => { document.title = "Manage Projects \u2014 ProveForMe"; }, []);
+
   useEffect(() => {
     const role = localStorage.getItem("pfm_role");
     if (role !== "ADMIN") {

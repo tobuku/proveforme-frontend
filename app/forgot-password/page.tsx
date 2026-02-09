@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 const API_BASE =
@@ -13,6 +13,8 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  useEffect(() => { document.title = "Reset Password \u2014 ProveForMe"; }, []);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -52,7 +54,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="pfm-shell">
+    <div className="min-h-screen bg-white text-slate-900">
       <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-8 text-sm">
         <div className="mb-6 text-center">
           <p className="text-xs uppercase tracking-[0.2em] text-[#0066FF]">
@@ -61,7 +63,7 @@ export default function ForgotPasswordPage() {
           <h1 className="mt-2 text-2xl font-semibold tracking-tight">
             Reset your password
           </h1>
-          <p className="mt-2 text-xs text-slate-300">
+          <p className="mt-2 text-xs text-slate-600">
             Enter the email address you registered with and we&apos;ll send you
             a link to reset your password.
           </p>
@@ -69,25 +71,25 @@ export default function ForgotPasswordPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="rounded-md border border-red-500 bg-red-950/40 px-3 py-2 text-xs text-red-200">
+            <div className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-800">
               {error}
             </div>
           )}
 
           {success && (
-            <div className="rounded-md border border-emerald-500 bg-emerald-950/40 px-3 py-2 text-xs text-emerald-200">
+            <div className="rounded-md border border-green-300 bg-green-50 px-3 py-2 text-xs text-green-700">
               {success}
             </div>
           )}
 
           <div className="space-y-1">
-            <label className="block text-xs font-semibold text-slate-200">
+            <label className="block text-xs font-semibold text-slate-700">
               Email
             </label>
             <input
               type="email"
               autoComplete="email"
-              className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none focus:border-[#0066FF]"
+              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-[#0066FF]"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
@@ -103,18 +105,18 @@ export default function ForgotPasswordPage() {
           </button>
         </form>
 
-        <div className="mt-4 flex items-center justify-between text-[11px] text-slate-400">
+        <div className="mt-4 flex items-center justify-between text-[11px] text-slate-500">
           <button
             type="button"
             onClick={() => router.push("/login")}
-            className="hover:text-slate-100"
+            className="hover:text-slate-900"
           >
             &larr; Back to Login
           </button>
           <button
             type="button"
             onClick={() => router.push("/register")}
-            className="hover:text-slate-100"
+            className="hover:text-slate-900"
           >
             Need an account? Register
           </button>

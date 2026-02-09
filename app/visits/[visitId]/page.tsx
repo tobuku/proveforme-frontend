@@ -56,6 +56,8 @@ export default function VisitDetailPage() {
   // Lightbox state
   const [lightboxPhoto, setLightboxPhoto] = useState<Photo | null>(null);
 
+  useEffect(() => { document.title = "Visit Details \u2014 ProveForMe"; }, []);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const token = localStorage.getItem("pfm_token");

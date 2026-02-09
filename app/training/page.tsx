@@ -1,9 +1,12 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { AuthedHeader } from "../../components/AuthedHeader";
 
 export default function TrainingPage() {
+  useEffect(() => { document.title = "BG Training \u2014 ProveForMe"; }, []);
+
   return (
     <div className="min-h-screen bg-white text-slate-900 flex flex-col">
       <AuthedHeader role={null} />

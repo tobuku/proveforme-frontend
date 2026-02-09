@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import Link from "next/link";
 import { AuthedHeader } from "../../components/AuthedHeader";
 
 export default function SupportPage() {
+  useEffect(() => { document.title = "Support \u2014 ProveForMe"; }, []);
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [subject, setSubject] = useState("");

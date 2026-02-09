@@ -11,6 +11,8 @@ function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
+  useEffect(() => { document.title = "Verify Email \u2014 ProveForMe"; }, []);
+
   const [status, setStatus] = useState<"loading" | "success" | "error">(
     token ? "loading" : "error"
   );

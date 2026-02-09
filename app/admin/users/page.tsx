@@ -51,6 +51,8 @@ export default function AdminUsersPage() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
 
+  useEffect(() => { document.title = "Manage Users \u2014 ProveForMe"; }, []);
+
   useEffect(() => {
     const role = localStorage.getItem("pfm_role");
     if (role !== "ADMIN") {

@@ -77,6 +77,8 @@ export default function CreateProjectPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => { document.title = "Create Project \u2014 ProveForMe"; }, []);
+
   useEffect(() => {
     try {
       const rawUser = localStorage.getItem("pfm_user");

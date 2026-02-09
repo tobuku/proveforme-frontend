@@ -61,6 +61,8 @@ export default function AdminPaymentsPage() {
   const [confirmCleanup, setConfirmCleanup] = useState(false);
   const [cleanupLoading, setCleanupLoading] = useState(false);
 
+  useEffect(() => { document.title = "Manage Payments \u2014 ProveForMe"; }, []);
+
   useEffect(() => {
     const role = localStorage.getItem("pfm_role");
     if (role !== "ADMIN") {

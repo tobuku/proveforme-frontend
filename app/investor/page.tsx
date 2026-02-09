@@ -56,6 +56,8 @@ export default function InvestorDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => { document.title = "Investor Dashboard \u2014 ProveForMe"; }, []);
+
   // Read auth from localStorage and guard route
   useEffect(() => {
     try {

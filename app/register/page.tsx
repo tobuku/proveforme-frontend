@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 const API_BASE =
@@ -21,6 +21,8 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  useEffect(() => { document.title = "Create Account \u2014 ProveForMe"; }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -85,20 +87,20 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-slate-900/80 border border-slate-800 rounded-xl p-6 shadow-xl">
+    <div className="min-h-screen bg-white text-slate-900 flex items-center justify-center px-4">
+      <div className="w-full max-w-md bg-gray-50 border border-gray-200 rounded-xl p-6 shadow-xl">
         <button
           type="button"
           onClick={() => router.push("/")}
-          className="text-xs text-slate-400 hover:text-slate-200 mb-2"
+          className="text-xs text-slate-500 hover:text-slate-700 mb-2"
         >
           ← Back to dashboard
         </button>
 
-        <h1 className="text-xl font-semibold text-slate-50 mb-1">
+        <h1 className="text-xl font-semibold text-slate-900 mb-1">
           Create your ProveForMe account
         </h1>
-        <p className="text-xs text-slate-400 mb-4">
+        <p className="text-xs text-slate-500 mb-4">
           Choose <span className="font-semibold">Investor</span> if you post
           projects, or <span className="font-semibold">BG</span> if you&apos;re
           Boots on the Ground.
@@ -107,12 +109,12 @@ export default function RegisterPage() {
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="flex gap-2">
             <div className="flex-1">
-              <label className="block text-xs text-slate-300 mb-1">
+              <label className="block text-xs text-slate-600 mb-1">
                 First name
               </label>
               <input
                 type="text"
-                className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm text-slate-50 focus:outline-none focus:ring-1 focus:ring-[#0066FF]"
+                className="w-full rounded border border-gray-300 bg-white px-2 py-1 text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0066FF]"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 autoComplete="given-name"
@@ -120,12 +122,12 @@ export default function RegisterPage() {
               />
             </div>
             <div className="flex-1">
-              <label className="block text-xs text-slate-300 mb-1">
+              <label className="block text-xs text-slate-600 mb-1">
                 Last name
               </label>
               <input
                 type="text"
-                className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm text-slate-50 focus:outline-none focus:ring-1 focus:ring-[#0066FF]"
+                className="w-full rounded border border-gray-300 bg-white px-2 py-1 text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0066FF]"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 autoComplete="family-name"
@@ -135,10 +137,10 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-xs text-slate-300 mb-1">Email</label>
+            <label className="block text-xs text-slate-600 mb-1">Email</label>
             <input
               type="email"
-              className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm text-slate-50 focus:outline-none focus:ring-1 focus:ring-[#0066FF]"
+              className="w-full rounded border border-gray-300 bg-white px-2 py-1 text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0066FF]"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
@@ -148,12 +150,12 @@ export default function RegisterPage() {
 
           <div className="flex gap-2">
             <div className="flex-1">
-              <label className="block text-xs text-slate-300 mb-1">
+              <label className="block text-xs text-slate-600 mb-1">
                 Password
               </label>
               <input
                 type="password"
-                className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm text-slate-50 focus:outline-none focus:ring-1 focus:ring-[#0066FF]"
+                className="w-full rounded border border-gray-300 bg-white px-2 py-1 text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0066FF]"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="new-password"
@@ -161,12 +163,12 @@ export default function RegisterPage() {
               />
             </div>
             <div className="flex-1">
-              <label className="block text-xs text-slate-300 mb-1">
+              <label className="block text-xs text-slate-600 mb-1">
                 Confirm password
               </label>
               <input
                 type="password"
-                className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm text-slate-50 focus:outline-none focus:ring-1 focus:ring-[#0066FF]"
+                className="w-full rounded border border-gray-300 bg-white px-2 py-1 text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0066FF]"
                 value={passwordConfirm}
                 onChange={(e) => setPasswordConfirm(e.target.value)}
                 autoComplete="new-password"
@@ -176,7 +178,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <span className="block text-xs text-slate-300 mb-1">
+            <span className="block text-xs text-slate-600 mb-1">
               Role (what are you here to do?)
             </span>
             <div className="flex gap-2 text-xs">
@@ -185,8 +187,8 @@ export default function RegisterPage() {
                 onClick={() => setRole("INVESTOR")}
                 className={`flex-1 rounded border px-2 py-1 ${
                   role === "INVESTOR"
-                    ? "border-[#0066FF] bg-blue-900/40 text-blue-200"
-                    : "border-slate-700 bg-slate-900 text-slate-300 hover:border-slate-500"
+                    ? "border-[#0066FF] bg-blue-50 text-blue-700"
+                    : "border-gray-300 bg-white text-slate-600 hover:border-slate-500"
                 }`}
               >
                 I&apos;m an Investor
@@ -196,8 +198,8 @@ export default function RegisterPage() {
                 onClick={() => setRole("BG")}
                 className={`flex-1 rounded border px-2 py-1 ${
                   role === "BG"
-                    ? "border-[#0066FF] bg-blue-900/40 text-blue-200"
-                    : "border-slate-700 bg-slate-900 text-slate-300 hover:border-slate-500"
+                    ? "border-[#0066FF] bg-blue-50 text-blue-700"
+                    : "border-gray-300 bg-white text-slate-600 hover:border-slate-500"
                 }`}
               >
                 I&apos;m Boots on the Ground (BG)
@@ -206,13 +208,13 @@ export default function RegisterPage() {
           </div>
 
           {formError && (
-            <p className="text-xs text-red-400 bg-red-950/40 border border-red-900 rounded px-2 py-1">
-              ⚠️ {formError}
+            <p className="text-xs text-red-800 bg-red-50 border border-red-300 rounded px-2 py-1">
+              {formError}
             </p>
           )}
 
           {successMessage && (
-            <p className="text-xs text-emerald-300 bg-emerald-950/30 border border-emerald-800 rounded px-2 py-1">
+            <p className="text-xs text-green-700 bg-green-50 border border-green-300 rounded px-2 py-1">
               {successMessage}
             </p>
           )}
@@ -220,13 +222,13 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded bg-[#0066FF] hover:bg-[#0052CC] disabled:opacity-60 disabled:cursor-not-allowed text-sm font-medium py-2 mt-1"
+            className="w-full rounded bg-[#0066FF] hover:bg-[#0052CC] disabled:opacity-60 disabled:cursor-not-allowed text-sm font-medium py-2 mt-1 text-white"
           >
             {loading ? "Creating account..." : "Create account"}
           </button>
         </form>
 
-        <p className="mt-3 text-[11px] text-slate-400">
+        <p className="mt-3 text-[11px] text-slate-500">
           Already registered?{" "}
           <button
             type="button"
