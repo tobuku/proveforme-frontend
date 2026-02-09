@@ -221,7 +221,7 @@ export default function AdminProjectsPage() {
                         : "-"}
                     </td>
                     <td className="px-3 py-2">
-                      ${project.payPerVisit.toFixed(2)}
+                      ${Number(project.payPerVisit).toFixed(2)}
                     </td>
                     <td className="px-3 py-2">
                       <span
