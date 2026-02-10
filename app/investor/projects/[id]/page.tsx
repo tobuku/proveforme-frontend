@@ -36,6 +36,7 @@ type BG = {
   email: string;
   stripeOnboarded: boolean;
   serviceZipCodes?: string | null;
+  profilePhotoUrl?: string | null;
 };
 
 type Payment = {
@@ -65,6 +66,7 @@ type BgInterest = {
     city: string | null;
     state: string | null;
     stripeOnboarded: boolean;
+    profilePhotoUrl?: string | null;
   };
 };
 
@@ -79,6 +81,7 @@ type VisitForProject = {
     id: string;
     firstName: string;
     lastName: string;
+    profilePhotoUrl?: string | null;
   };
 };
 
@@ -127,7 +130,21 @@ function VisitsSection({ projectId }: { projectId: string }) {
               onClick={() => router.push(`/visits/${v.id}`)}
               className="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 p-3 cursor-pointer hover:border-gray-400 transition-colors"
             >
-              <div>
+              <div className="flex items-center gap-3">
+                {v.bg.profilePhotoUrl ? (
+                  <img
+                    src={v.bg.profilePhotoUrl}
+                    alt={`${v.bg.firstName} ${v.bg.lastName}`}
+                    className="h-8 w-8 rounded-full object-cover border border-gray-200 flex-shrink-0"
+                  />
+                ) : (
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 border border-gray-200 flex-shrink-0">
+                    <span className="text-[10px] font-semibold text-gray-400">
+                      {v.bg.firstName.charAt(0)}{v.bg.lastName.charAt(0)}
+                    </span>
+                  </div>
+                )}
+                <div>
                 <p className="text-xs font-medium text-black">
                   {v.bg.firstName} {v.bg.lastName}
                   {v.photoCount > 0 && (
@@ -144,6 +161,7 @@ function VisitsSection({ projectId }: { projectId: string }) {
                     {v.notes}
                   </p>
                 )}
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <span
@@ -671,7 +689,21 @@ export default function ProjectDetailPage() {
                   key={interest.id}
                   className="flex items-center justify-between rounded-md border border-gray-200 bg-white p-3"
                 >
-                  <div>
+                  <div className="flex items-center gap-3">
+                    {interest.bg.profilePhotoUrl ? (
+                      <img
+                        src={interest.bg.profilePhotoUrl}
+                        alt={`${interest.bg.firstName} ${interest.bg.lastName}`}
+                        className="h-10 w-10 rounded-full object-cover border border-gray-200 flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 border border-gray-200 flex-shrink-0">
+                        <span className="text-xs font-semibold text-gray-400">
+                          {interest.bg.firstName.charAt(0)}{interest.bg.lastName.charAt(0)}
+                        </span>
+                      </div>
+                    )}
+                    <div>
                     <p className="text-xs font-medium text-black">
                       {interest.bg.firstName} {interest.bg.lastName}
                     </p>
@@ -689,6 +721,7 @@ export default function ProjectDetailPage() {
                     <p className="text-[10px] text-slate-400">
                       Interested {new Date(interest.createdAt).toLocaleDateString()}
                     </p>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <span

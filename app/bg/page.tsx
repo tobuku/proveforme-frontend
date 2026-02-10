@@ -100,6 +100,7 @@ export default function BgDashboardPage() {
 
   // Service zip codes state
   const [serviceZipCodes, setServiceZipCodes] = useState<string[]>([]);
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
   const [newZipCode, setNewZipCode] = useState("");
   const [savingZips, setSavingZips] = useState(false);
   const [zipSaveSuccess, setZipSaveSuccess] = useState(false);
@@ -162,6 +163,9 @@ export default function BgDashboardPage() {
         const data = await res.json();
         if (data.user?.serviceZipCodes) {
           setServiceZipCodes(data.user.serviceZipCodes);
+        }
+        if (data.user?.profilePhotoUrl) {
+          setProfilePhotoUrl(data.user.profilePhotoUrl);
         }
       }
     } catch (err) {
@@ -368,13 +372,36 @@ export default function BgDashboardPage() {
       <main className="min-h-screen bg-white text-black p-4 md:p-8">
         <div className="max-w-5xl mx-auto space-y-6">
           <div className="p-6 rounded-2xl bg-gray-100 border border-gray-200">
-            <h1 className="text-2xl font-bold text-black">BG Dashboard</h1>
-            <p className="text-xs text-gray-600">
-              Find projects in your area and manage your visits.
-            </p>
-            {authUser && (
-              <p className="text-xs text-gray-500 mt-2">
-                Logged in as <span className="font-semibold">{authUser.firstName} {authUser.lastName}</span>
+            <div className="flex items-center gap-4">
+              {profilePhotoUrl ? (
+                <img
+                  src={profilePhotoUrl}
+                  alt={authUser ? `${authUser.firstName} ${authUser.lastName}` : "Profile"}
+                  className="h-14 w-14 rounded-full object-cover border border-gray-200"
+                />
+              ) : (
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-200 border border-gray-300">
+                  <span className="text-lg font-semibold text-gray-400">
+                    {(authUser?.firstName || "?").charAt(0).toUpperCase()}
+                    {(authUser?.lastName || "").charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
+              <div>
+                <h1 className="text-2xl font-bold text-black">BG Dashboard</h1>
+                <p className="text-xs text-gray-600">
+                  Find projects in your area and manage your visits.
+                </p>
+                {authUser && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Logged in as <span className="font-semibold">{authUser.firstName} {authUser.lastName}</span>
+                  </p>
+                )}
+              </div>
+            </div>
+            {!profilePhotoUrl && (
+              <p className="mt-3 text-[10px] text-gray-400">
+                Add a profile photo from <a href="/account" className="text-blue-600 hover:underline">My Account</a> to build trust with investors.
               </p>
             )}
           </div>

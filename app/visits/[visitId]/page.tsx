@@ -21,6 +21,13 @@ type Visit = {
     investorId: string;
   };
   bgId: string;
+  bg?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    profilePhotoUrl?: string | null;
+  };
 };
 
 type Photo = {
@@ -94,22 +101,16 @@ export default function VisitDetailPage() {
       const photosData = await photosRes.json();
       setPhotos(photosData.photos || []);
 
-      // Fetch visit details from BG visits endpoint (works for BGs)
-      const storedRole = localStorage.getItem("pfm_role");
-      if (storedRole === "BG") {
-        const visitsRes = await fetch(`${API_BASE}/api/v1/visits/my`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (visitsRes.ok) {
-          const visitsData = await visitsRes.json();
-          const found = (visitsData.visits || []).find((v: any) => v.id === visitId);
-          if (found) {
-            setVisit(found);
-          }
+      // Fetch full visit details (includes BG info with profile photo)
+      const visitRes = await fetch(`${API_BASE}/api/v1/visits/${visitId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (visitRes.ok) {
+        const visitData = await visitRes.json();
+        if (visitData.visit) {
+          setVisit(visitData.visit);
         }
       }
-      // For investors, we don't have a single-visit endpoint, but we loaded photos successfully
-      // so we know we have access. We'll show what we can.
     } catch (err: any) {
       setError(err.message || "Failed to load visit data.");
     } finally {
@@ -233,14 +234,35 @@ export default function VisitDetailPage() {
 
         {/* Visit Info Header */}
         {visit ? (
-          <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-1">
+          <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
             <h1 className="text-lg font-semibold text-black">
               {visit.project.title}
             </h1>
             <p className="text-xs text-gray-600">
               {visit.project.city}, {visit.project.state}
             </p>
-            <div className="flex flex-wrap gap-4 pt-2 text-xs text-gray-700">
+            {visit.bg && role === "INVESTOR" && (
+              <div className="flex items-center gap-3 pt-1">
+                {visit.bg.profilePhotoUrl ? (
+                  <img
+                    src={visit.bg.profilePhotoUrl}
+                    alt={`${visit.bg.firstName} ${visit.bg.lastName}`}
+                    className="h-10 w-10 rounded-full object-cover border border-gray-200"
+                  />
+                ) : (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 border border-gray-300">
+                    <span className="text-xs font-semibold text-gray-500">
+                      {visit.bg.firstName.charAt(0)}{visit.bg.lastName.charAt(0)}
+                    </span>
+                  </div>
+                )}
+                <div>
+                  <p className="text-xs font-medium text-black">{visit.bg.firstName} {visit.bg.lastName}</p>
+                  <p className="text-[10px] text-gray-500">Boots on the Ground</p>
+                </div>
+              </div>
+            )}
+            <div className="flex flex-wrap gap-4 pt-1 text-xs text-gray-700">
               <span>
                 <span className="font-semibold">Status:</span> {visit.status}
               </span>

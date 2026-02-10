@@ -17,6 +17,7 @@ type UserProfile = {
   state: string | null;
   stripeOnboarded?: boolean;
   serviceZipCodes?: string[];
+  profilePhotoUrl?: string | null;
 };
 
 type PaymentSummary = {
@@ -61,6 +62,12 @@ export default function AccountPage() {
   const [savingPassword, setSavingPassword] = useState(false);
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+
+  // Profile photo state (BG only)
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [removingPhoto, setRemovingPhoto] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [photoSuccess, setPhotoSuccess] = useState<string | null>(null);
 
   useEffect(() => { document.title = "My Account \u2014 ProveForMe"; }, []);
 
@@ -256,6 +263,85 @@ export default function AccountPage() {
     }
   }
 
+  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Client-side validation
+    if (!["image/jpeg", "image/png"].includes(file.type)) {
+      setPhotoError("Only JPEG and PNG images are allowed.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setPhotoError("Image must be under 5 MB.");
+      return;
+    }
+
+    const token = localStorage.getItem("pfm_token");
+    if (!token) return;
+
+    setUploadingPhoto(true);
+    setPhotoError(null);
+    setPhotoSuccess(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("photo", file);
+
+      const res = await fetch(`${API_BASE}/api/v1/users/profile-photo`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setPhotoError(data.error || "Failed to upload photo.");
+        return;
+      }
+
+      setUser((prev) => prev ? { ...prev, profilePhotoUrl: data.profilePhotoUrl } : null);
+      setPhotoSuccess("Profile photo updated!");
+      setTimeout(() => setPhotoSuccess(null), 3000);
+    } catch {
+      setPhotoError("Network error uploading photo.");
+    } finally {
+      setUploadingPhoto(false);
+      // Reset file input
+      e.target.value = "";
+    }
+  }
+
+  async function handleRemovePhoto() {
+    const token = localStorage.getItem("pfm_token");
+    if (!token) return;
+
+    setRemovingPhoto(true);
+    setPhotoError(null);
+    setPhotoSuccess(null);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/users/profile-photo`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setPhotoError(data.error || "Failed to remove photo.");
+        return;
+      }
+
+      setUser((prev) => prev ? { ...prev, profilePhotoUrl: null } : null);
+      setPhotoSuccess("Profile photo removed.");
+      setTimeout(() => setPhotoSuccess(null), 3000);
+    } catch {
+      setPhotoError("Network error removing photo.");
+    } finally {
+      setRemovingPhoto(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="pfm-shell">
@@ -302,6 +388,61 @@ export default function AccountPage() {
           <div className="mb-4 rounded-md border border-green-300 bg-green-50 px-4 py-2 text-xs text-green-700">
             Password changed successfully!
           </div>
+        )}
+
+        {/* BG Profile Photo */}
+        {user.role === "BG" && (
+          <section className="mb-6 rounded-lg border border-gray-200 bg-white p-5">
+            <h2 className="mb-4 text-sm font-semibold text-black">Profile Photo</h2>
+            <div className="flex items-center gap-5">
+              {user.profilePhotoUrl ? (
+                <img
+                  src={user.profilePhotoUrl}
+                  alt={`${user.firstName || ""} ${user.lastName || ""}`}
+                  className="h-20 w-20 rounded-full object-cover border border-gray-200"
+                />
+              ) : (
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gray-100 border border-gray-200">
+                  <span className="text-2xl font-semibold text-gray-400">
+                    {(user.firstName || "?").charAt(0).toUpperCase()}
+                    {(user.lastName || "").charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
+              <div className="space-y-2">
+                <label className="inline-flex cursor-pointer items-center rounded-md bg-black px-4 py-2 text-xs font-semibold text-white hover:bg-gray-800 disabled:opacity-50">
+                  {uploadingPhoto ? "Uploading..." : user.profilePhotoUrl ? "Change Photo" : "Upload Photo"}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png"
+                    onChange={handlePhotoUpload}
+                    disabled={uploadingPhoto || removingPhoto}
+                    className="hidden"
+                  />
+                </label>
+                {user.profilePhotoUrl && (
+                  <button
+                    onClick={handleRemovePhoto}
+                    disabled={removingPhoto || uploadingPhoto}
+                    className="block text-xs text-red-600 hover:text-red-800 disabled:opacity-50"
+                  >
+                    {removingPhoto ? "Removing..." : "Remove Photo"}
+                  </button>
+                )}
+                <p className="text-[10px] text-gray-400">JPEG or PNG, max 5 MB. Visible to investors.</p>
+              </div>
+            </div>
+            {photoError && (
+              <div className="mt-3 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">
+                {photoError}
+              </div>
+            )}
+            {photoSuccess && (
+              <div className="mt-3 rounded-md border border-green-300 bg-green-50 px-3 py-2 text-xs text-green-700">
+                {photoSuccess}
+              </div>
+            )}
+          </section>
         )}
 
         {/* Profile Info Card */}
