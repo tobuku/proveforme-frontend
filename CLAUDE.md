@@ -31,7 +31,7 @@ app/                    # Next.js App Router pages
     projects/
     payments/
     visits/
-  visits/[visitId]/     # Visit detail + photo gallery
+  visits/[visitId]/     # Visit detail + photo gallery + investor review form
   about/  support/  terms/  privacy/  training/  sitemap-page/
 components/
   AuthedHeader.tsx      # Shared header with role-based navigation
@@ -99,6 +99,20 @@ useEffect(() => { document.title = "Page Name \u2014 ProveForMe"; }, []);
 - `npm run dev` — start dev server (port 3000)
 - `npm run build` — production build
 - `npm run lint` — ESLint check
+
+## Key Features by Page
+
+### Visit Detail (`visits/[visitId]/page.tsx`)
+- Photo upload, gallery with lightbox, download, and delete
+- **Investor review section** (visible when visit is SUBMITTED/APPROVED/PAID):
+  - 5-star rating selector with hover preview
+  - 6 feedback tag chips: Responsive, Good Communication, Takes Quality Pictures, Takes Quality Videos, Punctual, Thorough
+  - Optional comment textarea (500 char max)
+  - View existing review with Edit/Delete actions
+- BG star rating shown in visit header (investor view)
+
+### Investor Project Detail (`investor/projects/[id]/page.tsx`)
+- BG star rating (yellow star + average) displayed next to BG names in Interested BGs and Visits sections
 
 ## Deployment
 Push to `main` triggers Vercel auto-deploy. Changes are typically live within 60 seconds. Users may need hard refresh (Ctrl+Shift+R) or incognito to bypass cache.

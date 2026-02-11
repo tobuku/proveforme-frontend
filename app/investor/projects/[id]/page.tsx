@@ -67,6 +67,7 @@ type BgInterest = {
     state: string | null;
     stripeOnboarded: boolean;
     profilePhotoUrl?: string | null;
+    ratingAverage?: number | null;
   };
 };
 
@@ -82,6 +83,7 @@ type VisitForProject = {
     firstName: string;
     lastName: string;
     profilePhotoUrl?: string | null;
+    ratingAverage?: number | null;
   };
 };
 
@@ -147,6 +149,11 @@ function VisitsSection({ projectId }: { projectId: string }) {
                 <div>
                 <p className="text-xs font-medium text-black">
                   {v.bg.firstName} {v.bg.lastName}
+                  {v.bg.ratingAverage != null && v.bg.ratingAverage > 0 && (
+                    <span className="ml-1.5 text-[10px] font-normal text-yellow-500">
+                      &#9733; {v.bg.ratingAverage.toFixed(1)}
+                    </span>
+                  )}
                   {v.photoCount > 0 && (
                     <span className="ml-2 text-[10px] font-normal text-gray-500">
                       {v.photoCount} Photo{v.photoCount !== 1 ? "s" : ""}
@@ -706,6 +713,11 @@ export default function ProjectDetailPage() {
                     <div>
                     <p className="text-xs font-medium text-black">
                       {interest.bg.firstName} {interest.bg.lastName}
+                      {interest.bg.ratingAverage != null && interest.bg.ratingAverage > 0 && (
+                        <span className="ml-1.5 text-[10px] font-normal text-yellow-500">
+                          &#9733; {interest.bg.ratingAverage.toFixed(1)}
+                        </span>
+                      )}
                     </p>
                     <p className="text-[10px] text-slate-500">
                       {interest.bg.email}
