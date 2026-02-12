@@ -129,6 +129,7 @@ export default function BgDashboardPage() {
   const [respondingTo, setRespondingTo] = useState<string | null>(null);
   const [respondError, setRespondError] = useState<string | null>(null);
   const [respondSuccess, setRespondSuccess] = useState<string | null>(null);
+  const [reviewingAssignment, setReviewingAssignment] = useState<string | null>(null);
 
   // Earnings state
   const [earnings, setEarnings] = useState<EarningsData | null>(null);
@@ -515,11 +516,12 @@ export default function BgDashboardPage() {
               ) : (
                 <>
                   <p className="text-xs text-gray-600">
-                    An investor has selected you for the following project(s). Please accept or decline.
+                    An investor has selected you for the following project(s). Review the details and respond.
                   </p>
                   <div className="space-y-3">
                     {pendingAssignments.map((assignment) => {
                       const isResponding = respondingTo === assignment.id;
+                      const isReviewing = reviewingAssignment === assignment.id;
                       const expiresAt = assignment.expiresAt ? new Date(assignment.expiresAt) : null;
                       const now = new Date();
                       const hoursLeft = expiresAt
@@ -545,31 +547,49 @@ export default function BgDashboardPage() {
                             </span>
                           </div>
 
-                          <p className="text-[10px] text-gray-500">
-                            Selected by {assignment.investor.firstName} {assignment.investor.lastName}
-                            {hoursLeft !== null && (
-                              <span className={`ml-2 font-medium ${hoursLeft <= 6 ? "text-red-600" : "text-amber-600"}`}>
-                                &bull; Expires in {hoursLeft}h
-                              </span>
-                            )}
-                          </p>
+                          {!isReviewing ? (
+                            <button
+                              onClick={() => setReviewingAssignment(assignment.id)}
+                              className="w-full rounded-md bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-500"
+                            >
+                              Review &amp; Respond
+                            </button>
+                          ) : (
+                            <div className="space-y-2 pt-1 border-t border-blue-100">
+                              <p className="text-[10px] text-gray-500">
+                                Selected by {assignment.investor.firstName} {assignment.investor.lastName}
+                                {hoursLeft !== null && (
+                                  <span className={`ml-2 font-medium ${hoursLeft <= 6 ? "text-red-600" : "text-amber-600"}`}>
+                                    &bull; Expires in {hoursLeft}h
+                                  </span>
+                                )}
+                              </p>
 
-                          <div className="flex gap-2 pt-1">
-                            <button
-                              onClick={() => handleRespondToAssignment(assignment.id, true)}
-                              disabled={isResponding}
-                              className="flex-1 rounded-md bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-500 disabled:opacity-50"
-                            >
-                              {isResponding ? "..." : "Accept"}
-                            </button>
-                            <button
-                              onClick={() => handleRespondToAssignment(assignment.id, false)}
-                              disabled={isResponding}
-                              className="flex-1 rounded-md border border-red-300 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
-                            >
-                              {isResponding ? "..." : "Decline"}
-                            </button>
-                          </div>
+                              <div className="flex gap-2 pt-1">
+                                <button
+                                  onClick={() => handleRespondToAssignment(assignment.id, true)}
+                                  disabled={isResponding}
+                                  className="flex-1 rounded-md bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-500 disabled:opacity-50"
+                                >
+                                  {isResponding ? "..." : "Accept"}
+                                </button>
+                                <button
+                                  onClick={() => handleRespondToAssignment(assignment.id, false)}
+                                  disabled={isResponding}
+                                  className="flex-1 rounded-md border border-red-300 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
+                                >
+                                  {isResponding ? "..." : "Decline"}
+                                </button>
+                              </div>
+
+                              <button
+                                onClick={() => setReviewingAssignment(null)}
+                                className="w-full text-[10px] text-gray-400 hover:text-gray-600 pt-1"
+                              >
+                                Collapse
+                              </button>
+                            </div>
+                          )}
                         </div>
                       );
                     })}
