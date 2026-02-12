@@ -71,13 +71,13 @@ export default function RegisterPage() {
       }
 
       setSuccessMessage(
-        "Account created successfully. You can now log in on the login page."
+        "Account created! A verification email has been sent to your inbox. Please check your email and click the verification link before logging in."
       );
 
-      // Optional: redirect after a short delay
+      // Redirect after giving the user time to read the verification notice
       setTimeout(() => {
         router.push("/login");
-      }, 1500);
+      }, 5000);
     } catch (err: any) {
       console.error("Register error", err);
       setFormError("Network error: failed to reach the server.");
@@ -214,9 +214,10 @@ export default function RegisterPage() {
           )}
 
           {successMessage && (
-            <p className="text-xs text-green-700 bg-green-50 border border-green-300 rounded px-2 py-1">
-              {successMessage}
-            </p>
+            <div className="text-xs text-blue-800 bg-blue-50 border border-blue-300 rounded px-3 py-2 space-y-1">
+              <p className="font-semibold">{successMessage}</p>
+              <p className="text-[10px] text-blue-600">Redirecting to login page...</p>
+            </div>
           )}
 
           <button

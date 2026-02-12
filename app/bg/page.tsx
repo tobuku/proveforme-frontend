@@ -59,6 +59,19 @@ type AvailableProject = {
   };
 };
 
+type PendingAssignment = {
+  id: string;
+  title: string;
+  city: string;
+  state: string;
+  payPerVisit: string;
+  expiresAt?: string | null;
+  investor: {
+    firstName: string;
+    lastName: string;
+  };
+};
+
 type BgVisitsResponse = {
   ok: boolean;
   visits: VisitForBg[];
@@ -111,6 +124,12 @@ export default function BgDashboardPage() {
   const [expressingInterest, setExpressingInterest] = useState<string | null>(null);
   const [expressedInterests, setExpressedInterests] = useState<Set<string>>(new Set());
 
+  // Pending assignments state
+  const [pendingAssignments, setPendingAssignments] = useState<PendingAssignment[]>([]);
+  const [respondingTo, setRespondingTo] = useState<string | null>(null);
+  const [respondError, setRespondError] = useState<string | null>(null);
+  const [respondSuccess, setRespondSuccess] = useState<string | null>(null);
+
   // Earnings state
   const [earnings, setEarnings] = useState<EarningsData | null>(null);
 
@@ -148,6 +167,7 @@ export default function BgDashboardPage() {
       fetchUserProfile(token);
       fetchAvailableProjects(token);
       fetchEarnings(token);
+      fetchPendingAssignments(token);
     } catch {
       setError("Failed to read login info. Try logging in again.");
       setLoading(false);
@@ -258,6 +278,61 @@ export default function BgDashboardPage() {
       console.error("Failed to express interest:", err);
     } finally {
       setExpressingInterest(null);
+    }
+  }
+
+  async function fetchPendingAssignments(token: string) {
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/projects/pending-assignment`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPendingAssignments(data.assignments || data.projects || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch pending assignments:", err);
+    }
+  }
+
+  async function handleRespondToAssignment(projectId: string, accept: boolean) {
+    if (!authToken) return;
+
+    setRespondingTo(projectId);
+    setRespondError(null);
+    setRespondSuccess(null);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/projects/${projectId}/respond`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ accept }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setRespondError(data.error || "Failed to respond to assignment");
+        return;
+      }
+
+      // Remove assignment from the list
+      setPendingAssignments((prev) => prev.filter((a) => a.id !== projectId));
+      setRespondSuccess(accept ? "Assignment accepted! You will be funded shortly." : "Assignment declined.");
+
+      // If accepted, refresh visits list
+      if (accept) {
+        fetchBgVisits(authToken);
+      }
+
+      setTimeout(() => setRespondSuccess(null), 4000);
+    } catch (err) {
+      setRespondError("Network error responding to assignment");
+    } finally {
+      setRespondingTo(null);
     }
   }
 
@@ -409,6 +484,88 @@ export default function BgDashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column */}
           <div className="space-y-6">
+            {/* Pending Assignments Section */}
+            {pendingAssignments.length > 0 && (
+              <section className="p-4 rounded-xl bg-blue-50 border-2 border-blue-400 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-semibold text-black">
+                    Pending Assignments ({pendingAssignments.length})
+                  </h2>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-500 text-white">
+                    Action Required
+                  </span>
+                </div>
+                <p className="text-xs text-gray-600">
+                  An investor has selected you for the following project(s). Please accept or decline.
+                </p>
+
+                {respondError && (
+                  <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1">{respondError}</p>
+                )}
+                {respondSuccess && (
+                  <p className="text-xs text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1">{respondSuccess}</p>
+                )}
+
+                <div className="space-y-3">
+                  {pendingAssignments.map((assignment) => {
+                    const isResponding = respondingTo === assignment.id;
+                    const expiresAt = assignment.expiresAt ? new Date(assignment.expiresAt) : null;
+                    const now = new Date();
+                    const hoursLeft = expiresAt
+                      ? Math.max(0, Math.round((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60)))
+                      : null;
+
+                    return (
+                      <div
+                        key={assignment.id}
+                        className="p-3 rounded-lg bg-white border border-blue-200 space-y-2"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="text-[10px] uppercase tracking-wider text-gray-500">
+                              {assignment.city}, {assignment.state}
+                            </p>
+                            <h3 className="text-sm font-semibold text-black">
+                              {assignment.title}
+                            </h3>
+                          </div>
+                          <span className="text-sm font-bold text-green-700">
+                            ${assignment.payPerVisit}
+                          </span>
+                        </div>
+
+                        <p className="text-[10px] text-gray-500">
+                          Selected by {assignment.investor.firstName} {assignment.investor.lastName}
+                          {hoursLeft !== null && (
+                            <span className={`ml-2 font-medium ${hoursLeft <= 6 ? "text-red-600" : "text-amber-600"}`}>
+                              &bull; Expires in {hoursLeft}h
+                            </span>
+                          )}
+                        </p>
+
+                        <div className="flex gap-2 pt-1">
+                          <button
+                            onClick={() => handleRespondToAssignment(assignment.id, true)}
+                            disabled={isResponding}
+                            className="flex-1 rounded-md bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-500 disabled:opacity-50"
+                          >
+                            {isResponding ? "..." : "Accept"}
+                          </button>
+                          <button
+                            onClick={() => handleRespondToAssignment(assignment.id, false)}
+                            disabled={isResponding}
+                            className="flex-1 rounded-md border border-red-300 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
+                          >
+                            {isResponding ? "..." : "Decline"}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
             {/* Stripe Onboarding Section */}
             <section className={`p-4 rounded-xl space-y-3 ${
               stripeStatus?.onboarded

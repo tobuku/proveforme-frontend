@@ -279,6 +279,11 @@ export default function ProjectDetailPage() {
   // BG Interests state
   const [interests, setInterests] = useState<BgInterest[]>([]);
 
+  // BG Selection flow state
+  const [selectionLoading, setSelectionLoading] = useState(false);
+  const [selectionError, setSelectionError] = useState<string | null>(null);
+  const [selectionSuccess, setSelectionSuccess] = useState<string | null>(null);
+
   // Delete state
   const [deleting, setDeleting] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
@@ -364,8 +369,9 @@ export default function ProjectDetailPage() {
   }, [projectId]);
 
   // Create payment intent
-  const handleFundProject = async () => {
-    if (!selectedBG || !fundAmount) {
+  const handleFundProject = async (bgIdOverride?: string) => {
+    const bgId = bgIdOverride || selectedBG;
+    if (!bgId || !fundAmount) {
       setFundingError("Please select a BG and enter an amount");
       return;
     }
@@ -385,7 +391,7 @@ export default function ProjectDetailPage() {
         },
         body: JSON.stringify({
           projectId,
-          bgId: selectedBG,
+          bgId,
           amount: parseFloat(fundAmount),
         }),
       });
@@ -404,6 +410,50 @@ export default function ProjectDetailPage() {
       setFundingError("Network error creating payment");
     } finally {
       setFundingLoading(false);
+    }
+  };
+
+  // Select a BG for this project (two-step flow: select → BG accepts → then fund)
+  const handleSelectBG = async (bgId: string) => {
+    const token = localStorage.getItem("pfm_token");
+    if (!token) return;
+
+    setSelectionLoading(true);
+    setSelectionError(null);
+    setSelectionSuccess(null);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/projects/${projectId}/select-bg`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ bgId }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setSelectionError(data.error || "Failed to select BG");
+        return;
+      }
+
+      setSelectionSuccess("BG has been selected and notified. Awaiting their response.");
+
+      // Refresh interests to get updated statuses
+      const interestsRes = await fetch(
+        `${API_BASE}/api/v1/projects/${projectId}/interests`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (interestsRes.ok) {
+        const iData = await interestsRes.json();
+        setInterests(iData.interests || []);
+      }
+    } catch (err) {
+      setSelectionError("Network error selecting BG");
+    } finally {
+      setSelectionLoading(false);
     }
   };
 
@@ -556,198 +606,289 @@ export default function ProjectDetailPage() {
           </div>
         )}
 
-        {/* Fund Boots on the Ground Section */}
+        {/* Boots on the Ground Section — two-step: Select BG → BG accepts → Fund */}
         <section className="mb-8 rounded-lg border border-gray-300 bg-white p-4">
-          <h2 className="mb-4 text-sm font-semibold text-black">
-            Fund Boots on the Ground
-          </h2>
-          <p className="mb-4 text-xs text-gray-600">
-            Select a BG to assign to this project and fund their visit. Payment will be held in escrow until you release it after the visit is completed.
-          </p>
+          {(() => {
+            const selectedInterest = interests.find((i) => i.status === "SELECTED");
+            const acceptedInterest = interests.find((i) => i.status === "ACCEPTED");
+            const hasPendingSelection = !!selectedInterest;
+            const hasAcceptedBG = !!acceptedInterest;
 
-          {clientSecret ? (
-            !stripePromise ? (
-              <div className="text-xs text-red-600">
-                Payment system not configured. Please contact support.
-              </div>
-            ) : (
-              <Elements
-                stripe={stripePromise}
-                options={{
-                  clientSecret,
-                  appearance: { theme: "stripe" },
-                }}
-              >
-                <CheckoutForm
-                  clientSecret={clientSecret}
-                  onSuccess={() => setFundingSuccess(true)}
-                />
-              </Elements>
-            )
-          ) : (
-            <div className="space-y-4">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-700">
-                  Select BG (Boots on the Ground)
-                </label>
-                {(() => {
-                  // Filter BGs by matching zip codes
-                  const projectZip = project?.zipCode?.trim() || "";
-                  const matchingBGs = projectZip
-                    ? availableBGs.filter((bg) => {
-                        const bgZips = (bg.serviceZipCodes || "")
-                          .split(",")
-                          .map((z) => z.trim())
-                          .filter((z) => z.length > 0);
-                        return bgZips.includes(projectZip);
-                      })
-                    : availableBGs;
+            return (
+              <>
+                <h2 className="mb-4 text-sm font-semibold text-black">
+                  {hasAcceptedBG ? "Fund Boots on the Ground" : "Select Boots on the Ground"}
+                </h2>
 
-                  // Separate onboarded and non-onboarded BGs
-                  const onboardedBGs = matchingBGs.filter((bg) => bg.stripeOnboarded);
-                  const nonOnboardedBGs = matchingBGs.filter((bg) => !bg.stripeOnboarded);
+                {/* Step 1: No BG selected yet — show dropdown + Select BG button */}
+                {!hasPendingSelection && !hasAcceptedBG && (
+                  <>
+                    <p className="mb-4 text-xs text-gray-600">
+                      Select a BG to assign to this project. They will be notified and must accept before you can fund the visit.
+                    </p>
 
-                  return (
-                    <>
-                      <select
-                        value={selectedBG}
-                        onChange={(e) => setSelectedBG(e.target.value)}
-                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black"
+                    <div className="space-y-4">
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-gray-700">
+                          Select BG (Boots on the Ground)
+                        </label>
+                        {(() => {
+                          const projectZip = project?.zipCode?.trim() || "";
+                          const matchingBGs = projectZip
+                            ? availableBGs.filter((bg) => {
+                                const bgZips = (bg.serviceZipCodes || "")
+                                  .split(",")
+                                  .map((z) => z.trim())
+                                  .filter((z) => z.length > 0);
+                                return bgZips.includes(projectZip);
+                              })
+                            : availableBGs;
+
+                          const onboardedBGs = matchingBGs.filter((bg) => bg.stripeOnboarded);
+                          const nonOnboardedBGs = matchingBGs.filter((bg) => !bg.stripeOnboarded);
+
+                          return (
+                            <>
+                              <select
+                                value={selectedBG}
+                                onChange={(e) => setSelectedBG(e.target.value)}
+                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black"
+                              >
+                                <option value="">-- Select a BG --</option>
+                                {onboardedBGs.map((bg) => (
+                                  <option key={bg.id} value={bg.id}>
+                                    {bg.firstName} {bg.lastName} ({bg.email})
+                                  </option>
+                                ))}
+                                {nonOnboardedBGs.length > 0 && (
+                                  <optgroup label="-- Payment Setup Incomplete --">
+                                    {nonOnboardedBGs.map((bg) => (
+                                      <option key={bg.id} value={bg.id} disabled>
+                                        {bg.firstName} {bg.lastName} - Not ready for payments
+                                      </option>
+                                    ))}
+                                  </optgroup>
+                                )}
+                              </select>
+                              {matchingBGs.length === 0 && projectZip && (
+                                <p className="mt-1 text-xs text-amber-600">
+                                  No BGs service zip code {projectZip}. Try inviting BGs to add this area to their service zones.
+                                </p>
+                              )}
+                              {matchingBGs.length === 0 && !projectZip && (
+                                <p className="mt-1 text-xs text-slate-500">
+                                  No Boots on the Ground available yet. BGs must register before they can be assigned to projects.
+                                </p>
+                              )}
+                              {onboardedBGs.length === 0 && nonOnboardedBGs.length > 0 && (
+                                <p className="mt-1 text-xs text-amber-600">
+                                  BGs in this area need to complete their payment setup before they can receive funds.
+                                </p>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </div>
+
+                      {selectionError && (
+                        <p className="text-xs text-red-600">{selectionError}</p>
+                      )}
+                      {selectionSuccess && (
+                        <p className="text-xs text-green-600">{selectionSuccess}</p>
+                      )}
+
+                      <button
+                        onClick={() => selectedBG && handleSelectBG(selectedBG)}
+                        disabled={selectionLoading || !selectedBG}
+                        className="w-full rounded-md bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50"
                       >
-                        <option value="">-- Select a BG --</option>
-                        {onboardedBGs.map((bg) => (
-                          <option key={bg.id} value={bg.id}>
-                            {bg.firstName} {bg.lastName} ({bg.email})
-                          </option>
-                        ))}
-                        {nonOnboardedBGs.length > 0 && (
-                          <optgroup label="-- Payment Setup Incomplete --">
-                            {nonOnboardedBGs.map((bg) => (
-                              <option key={bg.id} value={bg.id} disabled>
-                                {bg.firstName} {bg.lastName} - Not ready for payments
-                              </option>
-                            ))}
-                          </optgroup>
+                        {selectionLoading ? "Selecting BG..." : "Select BG"}
+                      </button>
+                    </div>
+                  </>
+                )}
+
+                {/* Step 2: BG is SELECTED — awaiting their response */}
+                {hasPendingSelection && !hasAcceptedBG && (
+                  <div className="rounded-md border border-yellow-300 bg-yellow-50 px-4 py-3 space-y-1">
+                    <p className="text-xs font-medium text-yellow-800">
+                      Awaiting response from {selectedInterest.bg.firstName} {selectedInterest.bg.lastName}...
+                    </p>
+                    <p className="text-[10px] text-yellow-700">
+                      The selected BG has been notified. They must accept or decline before you can proceed with funding.
+                    </p>
+                  </div>
+                )}
+
+                {/* Step 3: BG has ACCEPTED — show Fund button with Stripe flow */}
+                {hasAcceptedBG && (
+                  <>
+                    <p className="mb-4 text-xs text-gray-600">
+                      <span className="font-medium text-green-700">{acceptedInterest.bg.firstName} {acceptedInterest.bg.lastName}</span> has accepted this assignment. Fund their visit below. Payment will be held in escrow until you release it after the visit is completed.
+                    </p>
+
+                    {clientSecret ? (
+                      !stripePromise ? (
+                        <div className="text-xs text-red-600">
+                          Payment system not configured. Please contact support.
+                        </div>
+                      ) : (
+                        <Elements
+                          stripe={stripePromise}
+                          options={{
+                            clientSecret,
+                            appearance: { theme: "stripe" },
+                          }}
+                        >
+                          <CheckoutForm
+                            clientSecret={clientSecret}
+                            onSuccess={() => setFundingSuccess(true)}
+                          />
+                        </Elements>
+                      )
+                    ) : (
+                      <div className="space-y-4">
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-gray-700">
+                            Amount ($)
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="1"
+                            value={fundAmount}
+                            onChange={(e) => setFundAmount(e.target.value)}
+                            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black"
+                          />
+                        </div>
+
+                        {fundingError && (
+                          <p className="text-xs text-red-600">{fundingError}</p>
                         )}
-                      </select>
-                      {matchingBGs.length === 0 && projectZip && (
-                        <p className="mt-1 text-xs text-amber-600">
-                          No BGs service zip code {projectZip}. Try inviting BGs to add this area to their service zones.
-                        </p>
-                      )}
-                      {matchingBGs.length === 0 && !projectZip && (
-                        <p className="mt-1 text-xs text-slate-500">
-                          No Boots on the Ground available yet. BGs must register before they can be assigned to projects.
-                        </p>
-                      )}
-                      {onboardedBGs.length === 0 && nonOnboardedBGs.length > 0 && (
-                        <p className="mt-1 text-xs text-amber-600">
-                          BGs in this area need to complete their payment setup before they can receive funds.
-                        </p>
-                      )}
-                    </>
-                  );
-                })()}
-              </div>
 
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-700">
-                  Amount ($)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="1"
-                  value={fundAmount}
-                  onChange={(e) => setFundAmount(e.target.value)}
-                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black"
-                />
-              </div>
-
-              {fundingError && (
-                <p className="text-xs text-red-600">
-                  {fundingError}
-                </p>
-              )}
-
-              <button
-                onClick={handleFundProject}
-                disabled={fundingLoading || !selectedBG || !fundAmount}
-                className="w-full rounded-md bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50"
-              >
-                {fundingLoading ? "Setting up payment..." : "Fund This BG"}
-              </button>
-            </div>
-          )}
+                        <button
+                          onClick={() => handleFundProject(acceptedInterest.bg.id)}
+                          disabled={fundingLoading || !fundAmount}
+                          className="w-full rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-500 disabled:opacity-50"
+                        >
+                          {fundingLoading ? "Setting up payment..." : `Fund This BG — $${fundAmount || "0"}`}
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </>
+            );
+          })()}
         </section>
 
-        {/* BG Interests Section — hidden once a BG is funded */}
-        {interests.length > 0 && !payments.some((p) => p.status === "FUNDED" || p.status === "HELD" || p.status === "RELEASED") && (
+        {/* BG Interests Section — shows status badges and Select buttons */}
+        {interests.length > 0 && (
           <section className="mb-8 rounded-lg border border-gray-300 bg-gray-50 p-4">
             <h2 className="mb-4 text-sm font-semibold text-black">
               Interested BGs ({interests.length})
             </h2>
             <p className="mb-4 text-xs text-gray-600">
-              These Boots on the Ground have expressed interest in this project. You can fund any of them above.
+              These Boots on the Ground have expressed interest in this project.
+              {!interests.some((i) => i.status === "SELECTED" || i.status === "ACCEPTED") &&
+                " Select one to assign them to this project."}
             </p>
             <div className="space-y-3">
-              {interests.map((interest) => (
-                <div
-                  key={interest.id}
-                  className="flex items-center justify-between rounded-md border border-gray-200 bg-white p-3"
-                >
-                  <div className="flex items-center gap-3">
-                    {interest.bg.profilePhotoUrl ? (
-                      <img
-                        src={interest.bg.profilePhotoUrl}
-                        alt={`${interest.bg.firstName} ${interest.bg.lastName}`}
-                        className="h-10 w-10 rounded-full object-cover border border-gray-200 flex-shrink-0"
-                      />
-                    ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 border border-gray-200 flex-shrink-0">
-                        <span className="text-xs font-semibold text-gray-400">
-                          {interest.bg.firstName.charAt(0)}{interest.bg.lastName.charAt(0)}
-                        </span>
+              {interests.map((interest) => {
+                const hasAnySelected = interests.some((i) => i.status === "SELECTED" || i.status === "ACCEPTED");
+
+                return (
+                  <div
+                    key={interest.id}
+                    className={`flex items-center justify-between rounded-md border p-3 ${
+                      interest.status === "ACCEPTED"
+                        ? "border-green-300 bg-green-50"
+                        : interest.status === "SELECTED"
+                        ? "border-yellow-300 bg-yellow-50"
+                        : interest.status === "DECLINED"
+                        ? "border-red-200 bg-red-50 opacity-60"
+                        : "border-gray-200 bg-white"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      {interest.bg.profilePhotoUrl ? (
+                        <img
+                          src={interest.bg.profilePhotoUrl}
+                          alt={`${interest.bg.firstName} ${interest.bg.lastName}`}
+                          className="h-10 w-10 rounded-full object-cover border border-gray-200 flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 border border-gray-200 flex-shrink-0">
+                          <span className="text-xs font-semibold text-gray-400">
+                            {interest.bg.firstName.charAt(0)}{interest.bg.lastName.charAt(0)}
+                          </span>
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-xs font-medium text-black">
+                          {interest.bg.firstName} {interest.bg.lastName}
+                          {interest.bg.ratingAverage != null && interest.bg.ratingAverage > 0 && (
+                            <span className="ml-1.5 text-[10px] font-normal text-yellow-500">
+                              &#9733; {interest.bg.ratingAverage.toFixed(1)}
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-[10px] text-slate-500">
+                          {interest.bg.email}
+                          {interest.bg.city && interest.bg.state && (
+                            <span> &bull; {interest.bg.city}, {interest.bg.state}</span>
+                          )}
+                        </p>
+                        {interest.message && (
+                          <p className="text-[10px] text-slate-400 mt-1 italic">
+                            &quot;{interest.message}&quot;
+                          </p>
+                        )}
+                        <p className="text-[10px] text-slate-400">
+                          Interested {new Date(interest.createdAt).toLocaleDateString()}
+                        </p>
                       </div>
-                    )}
-                    <div>
-                    <p className="text-xs font-medium text-black">
-                      {interest.bg.firstName} {interest.bg.lastName}
-                      {interest.bg.ratingAverage != null && interest.bg.ratingAverage > 0 && (
-                        <span className="ml-1.5 text-[10px] font-normal text-yellow-500">
-                          &#9733; {interest.bg.ratingAverage.toFixed(1)}
-                        </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {/* Status badge */}
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                          interest.status === "ACCEPTED"
+                            ? "bg-green-100 text-green-700"
+                            : interest.status === "SELECTED"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : interest.status === "DECLINED"
+                            ? "bg-red-100 text-red-700"
+                            : interest.bg.stripeOnboarded
+                            ? "bg-gray-100 text-gray-600"
+                            : "bg-yellow-100 text-yellow-700"
+                        }`}
+                      >
+                        {interest.status === "ACCEPTED"
+                          ? "Ready to Fund"
+                          : interest.status === "SELECTED"
+                          ? "Awaiting Response"
+                          : interest.status === "DECLINED"
+                          ? "Declined"
+                          : interest.bg.stripeOnboarded
+                          ? "Pending"
+                          : "Setup Incomplete"}
+                      </span>
+
+                      {/* Select button — only for PENDING interests when no BG is already SELECTED/ACCEPTED */}
+                      {interest.status === "PENDING" && interest.bg.stripeOnboarded && !hasAnySelected && (
+                        <button
+                          onClick={() => handleSelectBG(interest.bg.id)}
+                          disabled={selectionLoading}
+                          className="rounded bg-black px-2.5 py-1 text-[10px] font-semibold text-white hover:bg-gray-800 disabled:opacity-50"
+                        >
+                          {selectionLoading ? "..." : "Select"}
+                        </button>
                       )}
-                    </p>
-                    <p className="text-[10px] text-slate-500">
-                      {interest.bg.email}
-                      {interest.bg.city && interest.bg.state && (
-                        <span> • {interest.bg.city}, {interest.bg.state}</span>
-                      )}
-                    </p>
-                    {interest.message && (
-                      <p className="text-[10px] text-slate-400 mt-1 italic">
-                        "{interest.message}"
-                      </p>
-                    )}
-                    <p className="text-[10px] text-slate-400">
-                      Interested {new Date(interest.createdAt).toLocaleDateString()}
-                    </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                        interest.bg.stripeOnboarded
-                          ? "bg-green-100 text-green-700"
-                          : "bg-yellow-100 text-yellow-700"
-                      }`}
-                    >
-                      {interest.bg.stripeOnboarded ? "Ready for Payment" : "Setup Incomplete"}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}
