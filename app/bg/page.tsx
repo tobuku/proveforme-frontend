@@ -81,6 +81,27 @@ type PendingAssignment = {
   };
 };
 
+type ActiveAssignment = {
+  interestId: string;
+  acceptedAt: string;
+  project: {
+    id: string;
+    title: string;
+    description: string | null;
+    city: string;
+    state: string;
+    zipCode: string | null;
+    payPerVisit: string;
+    scopeOfWork: string[];
+    status: string;
+    createdAt: string;
+    investor: {
+      firstName: string;
+      lastName: string;
+    };
+  };
+};
+
 type BgVisitsResponse = {
   ok: boolean;
   visits: VisitForBg[];
@@ -126,6 +147,9 @@ export default function BgDashboardPage() {
   const [newZipCode, setNewZipCode] = useState("");
   const [savingZips, setSavingZips] = useState(false);
   const [zipSaveSuccess, setZipSaveSuccess] = useState(false);
+
+  // Active assignments state (accepted, awaiting funding or active)
+  const [activeAssignments, setActiveAssignments] = useState<ActiveAssignment[]>([]);
 
   // Available projects state
   const [availableProjects, setAvailableProjects] = useState<AvailableProject[]>([]);
@@ -178,6 +202,7 @@ export default function BgDashboardPage() {
       fetchAvailableProjects(token);
       fetchEarnings(token);
       fetchPendingAssignments(token);
+      fetchActiveAssignments(token);
     } catch {
       setError("Failed to read login info. Try logging in again.");
       setLoading(false);
@@ -317,6 +342,31 @@ export default function BgDashboardPage() {
     }
   }
 
+  async function fetchActiveAssignments(token: string) {
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/projects/my-assignments`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const raw = data.assignments || [];
+        const normalised = raw.map((a: any) => ({
+          ...a,
+          project: {
+            ...a.project,
+            payPerVisit:
+              typeof a.project?.payPerVisit === "object"
+                ? String(a.project.payPerVisit)
+                : a.project?.payPerVisit ?? "0",
+          },
+        }));
+        setActiveAssignments(normalised);
+      }
+    } catch (err) {
+      console.error("Failed to fetch active assignments:", err);
+    }
+  }
+
   async function handleRespondToAssignment(projectId: string, accept: boolean) {
     if (!authToken) return;
 
@@ -345,8 +395,9 @@ export default function BgDashboardPage() {
       setPendingAssignments((prev) => prev.filter((a) => a.project.id !== projectId));
       setRespondSuccess(accept ? "Assignment accepted! You will be funded shortly." : "Assignment declined.");
 
-      // If accepted, refresh visits list
+      // If accepted, refresh active assignments and visits
       if (accept) {
+        fetchActiveAssignments(authToken);
         fetchBgVisits(authToken);
       }
 
@@ -641,6 +692,58 @@ export default function BgDashboardPage() {
                 </>
               )}
             </section>
+
+            {/* Active Projects Section — accepted assignments awaiting funding or in progress */}
+            {activeAssignments.length > 0 && (
+              <section className="p-4 rounded-xl bg-green-50 border-2 border-green-400 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-semibold text-black">
+                    Active Projects ({activeAssignments.length})
+                  </h2>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-green-600 text-white">
+                    Accepted
+                  </span>
+                </div>
+                <p className="text-xs text-gray-600">
+                  You accepted the following project(s). The investor will fund your visit, then it will appear under &quot;My Assigned Visits&quot;.
+                </p>
+                <div className="space-y-3">
+                  {activeAssignments.map((assignment) => (
+                    <div
+                      key={assignment.interestId}
+                      className="p-3 rounded-lg bg-white border border-green-200 space-y-2"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="text-[10px] uppercase tracking-wider text-gray-500">
+                            {assignment.project.city}, {assignment.project.state}
+                          </p>
+                          <h3 className="text-sm font-semibold text-black">
+                            {assignment.project.title}
+                          </h3>
+                        </div>
+                        <span className="text-sm font-bold text-green-700">
+                          ${assignment.project.payPerVisit}
+                        </span>
+                      </div>
+                      {assignment.project.description && (
+                        <p className="text-xs text-gray-600">
+                          {assignment.project.description}
+                        </p>
+                      )}
+                      <p className="text-[10px] text-gray-500">
+                        Investor: {assignment.project.investor.firstName} {assignment.project.investor.lastName}
+                      </p>
+                      <div className="rounded-md bg-yellow-50 border border-yellow-200 px-2 py-1.5">
+                        <p className="text-[10px] text-yellow-700 font-medium">
+                          Awaiting investor funding. Once funded, a visit will be scheduled and you can upload photos and videos.
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* Stripe Onboarding Section */}
             <section className={`p-4 rounded-xl space-y-3 ${
