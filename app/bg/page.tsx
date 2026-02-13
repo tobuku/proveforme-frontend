@@ -60,15 +60,24 @@ type AvailableProject = {
 };
 
 type PendingAssignment = {
-  id: string;
-  title: string;
-  city: string;
-  state: string;
-  payPerVisit: string;
-  expiresAt?: string | null;
-  investor: {
-    firstName: string;
-    lastName: string;
+  interestId: string;
+  selectedAt: string;
+  expiresAt: string;
+  project: {
+    id: string;
+    title: string;
+    description: string | null;
+    city: string;
+    state: string;
+    zipCode: string | null;
+    payPerVisit: string;
+    scopeOfWork: string[];
+    status: string;
+    createdAt: string;
+    investor: {
+      firstName: string;
+      lastName: string;
+    };
   };
 };
 
@@ -289,7 +298,19 @@ export default function BgDashboardPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        setPendingAssignments(data.assignments || data.projects || []);
+        const raw = data.assignments || data.projects || [];
+        // Normalise payPerVisit from Prisma Decimal to string
+        const normalised = raw.map((a: any) => ({
+          ...a,
+          project: {
+            ...a.project,
+            payPerVisit:
+              typeof a.project?.payPerVisit === "object"
+                ? String(a.project.payPerVisit)
+                : a.project?.payPerVisit ?? "0",
+          },
+        }));
+        setPendingAssignments(normalised);
       }
     } catch (err) {
       console.error("Failed to fetch pending assignments:", err);
@@ -321,7 +342,7 @@ export default function BgDashboardPage() {
       }
 
       // Remove assignment from the list
-      setPendingAssignments((prev) => prev.filter((a) => a.id !== projectId));
+      setPendingAssignments((prev) => prev.filter((a) => a.project.id !== projectId));
       setRespondSuccess(accept ? "Assignment accepted! You will be funded shortly." : "Assignment declined.");
 
       // If accepted, refresh visits list
@@ -520,8 +541,9 @@ export default function BgDashboardPage() {
                   </p>
                   <div className="space-y-3">
                     {pendingAssignments.map((assignment) => {
-                      const isResponding = respondingTo === assignment.id;
-                      const isReviewing = reviewingAssignment === assignment.id;
+                      const projectId = assignment.project.id;
+                      const isResponding = respondingTo === projectId;
+                      const isReviewing = reviewingAssignment === projectId;
                       const expiresAt = assignment.expiresAt ? new Date(assignment.expiresAt) : null;
                       const now = new Date();
                       const hoursLeft = expiresAt
@@ -530,26 +552,26 @@ export default function BgDashboardPage() {
 
                       return (
                         <div
-                          key={assignment.id}
+                          key={assignment.interestId}
                           className="p-3 rounded-lg bg-white border border-blue-200 space-y-2"
                         >
                           <div className="flex items-start justify-between">
                             <div>
                               <p className="text-[10px] uppercase tracking-wider text-gray-500">
-                                {assignment.city}, {assignment.state}
+                                {assignment.project.city}, {assignment.project.state}
                               </p>
                               <h3 className="text-sm font-semibold text-black">
-                                {assignment.title}
+                                {assignment.project.title}
                               </h3>
                             </div>
                             <span className="text-sm font-bold text-green-700">
-                              ${assignment.payPerVisit}
+                              ${assignment.project.payPerVisit}
                             </span>
                           </div>
 
                           {!isReviewing ? (
                             <button
-                              onClick={() => setReviewingAssignment(assignment.id)}
+                              onClick={() => setReviewingAssignment(projectId)}
                               className="w-full rounded-md bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-500"
                             >
                               Review &amp; Respond
@@ -557,7 +579,7 @@ export default function BgDashboardPage() {
                           ) : (
                             <div className="space-y-2 pt-1 border-t border-blue-100">
                               <p className="text-[10px] text-gray-500">
-                                Selected by {assignment.investor.firstName} {assignment.investor.lastName}
+                                Selected by {assignment.project.investor.firstName} {assignment.project.investor.lastName}
                                 {hoursLeft !== null && (
                                   <span className={`ml-2 font-medium ${hoursLeft <= 6 ? "text-red-600" : "text-amber-600"}`}>
                                     &bull; Expires in {hoursLeft}h
@@ -565,16 +587,38 @@ export default function BgDashboardPage() {
                                 )}
                               </p>
 
+                              {assignment.project.description && (
+                                <p className="text-xs text-gray-600">
+                                  {assignment.project.description}
+                                </p>
+                              )}
+
+                              {assignment.project.scopeOfWork && assignment.project.scopeOfWork.length > 0 && (
+                                <div className="space-y-1">
+                                  <p className="text-[10px] font-semibold text-gray-500">Scope of Work:</p>
+                                  <div className="flex flex-wrap gap-1">
+                                    {assignment.project.scopeOfWork.map((item) => (
+                                      <span
+                                        key={item}
+                                        className="px-1.5 py-0.5 rounded bg-blue-100 text-[9px] text-blue-700"
+                                      >
+                                        {item}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
                               <div className="flex gap-2 pt-1">
                                 <button
-                                  onClick={() => handleRespondToAssignment(assignment.id, true)}
+                                  onClick={() => handleRespondToAssignment(projectId, true)}
                                   disabled={isResponding}
                                   className="flex-1 rounded-md bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-500 disabled:opacity-50"
                                 >
                                   {isResponding ? "..." : "Accept"}
                                 </button>
                                 <button
-                                  onClick={() => handleRespondToAssignment(assignment.id, false)}
+                                  onClick={() => handleRespondToAssignment(projectId, false)}
                                   disabled={isResponding}
                                   className="flex-1 rounded-md border border-red-300 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
                                 >
