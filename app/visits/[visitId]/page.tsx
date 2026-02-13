@@ -96,6 +96,19 @@ export default function VisitDetailPage() {
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [reviewDeleting, setReviewDeleting] = useState(false);
 
+  // Submit / Approve / Dispute state
+  const [submitting, setSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [approving, setApproving] = useState(false);
+  const [approveSuccess, setApproveSuccess] = useState<string | null>(null);
+  const [approveError, setApproveError] = useState<string | null>(null);
+  const [showDisputeForm, setShowDisputeForm] = useState(false);
+  const [disputeReason, setDisputeReason] = useState("");
+  const [disputing, setDisputing] = useState(false);
+  const [disputeSuccess, setDisputeSuccess] = useState<string | null>(null);
+  const [disputeError, setDisputeError] = useState<string | null>(null);
+
   useEffect(() => { document.title = "Visit Details \u2014 ProveForMe"; }, []);
 
   useEffect(() => {
@@ -334,6 +347,133 @@ export default function VisitDetailPage() {
     }
   }
 
+  // BG submits visit for review
+  async function handleSubmitVisit() {
+    const token = localStorage.getItem("pfm_token");
+    if (!token || !visit) return;
+
+    setSubmitting(true);
+    setSubmitError(null);
+    setSubmitSuccess(null);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/visits/${visitId}/submit`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setSubmitError(data.error || "Failed to submit visit.");
+      } else {
+        setVisit({ ...visit, status: "SUBMITTED" });
+        setSubmitSuccess("Visit submitted for review! The investor will be notified.");
+      }
+    } catch (err: any) {
+      setSubmitError(err.message || "Failed to submit visit.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  // Investor approves visit and releases funds
+  async function handleApproveVisit() {
+    const token = localStorage.getItem("pfm_token");
+    if (!token || !visit) return;
+
+    setApproving(true);
+    setApproveError(null);
+    setApproveSuccess(null);
+
+    try {
+      // Step 1: Approve the visit
+      const statusRes = await fetch(`${API_BASE}/api/v1/visits/${visitId}/status`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: "APPROVED" }),
+      });
+
+      const statusData = await statusRes.json();
+      if (!statusRes.ok) {
+        setApproveError(statusData.error || "Failed to approve visit.");
+        return;
+      }
+
+      // Step 2: Find FUNDED payment for this project and release it
+      try {
+        const paymentsRes = await fetch(
+          `${API_BASE}/api/v1/payments/project/${visit.project.id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (paymentsRes.ok) {
+          const paymentsData = await paymentsRes.json();
+          const fundedPayment = (paymentsData.payments || []).find(
+            (p: any) => p.status === "FUNDED" || p.status === "HELD"
+          );
+          if (fundedPayment) {
+            await fetch(`${API_BASE}/api/v1/payments/release/${fundedPayment.id}`, {
+              method: "POST",
+              headers: { Authorization: `Bearer ${token}` },
+            });
+          }
+        }
+      } catch {
+        // Non-fatal — visit is approved even if release fails
+      }
+
+      setVisit({ ...visit, status: "APPROVED" });
+      setApproveSuccess("Visit approved! Funds have been released to the BG.");
+    } catch (err: any) {
+      setApproveError(err.message || "Failed to approve visit.");
+    } finally {
+      setApproving(false);
+    }
+  }
+
+  // Investor requests corrections (disputes visit)
+  async function handleDisputeVisit() {
+    const token = localStorage.getItem("pfm_token");
+    if (!token || !visit) return;
+
+    setDisputing(true);
+    setDisputeError(null);
+    setDisputeSuccess(null);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/visits/${visitId}/status`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: "DISPUTED",
+          reason: disputeReason.trim() || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setDisputeError(data.error || "Failed to request corrections.");
+      } else {
+        const updatedNotes = disputeReason.trim()
+          ? `[INVESTOR FEEDBACK]: ${disputeReason.trim()}`
+          : visit.notes;
+        setVisit({ ...visit, status: "DISPUTED", notes: updatedNotes });
+        setDisputeSuccess("Visit sent back for corrections. The BG will be notified.");
+        setShowDisputeForm(false);
+        setDisputeReason("");
+      }
+    } catch (err: any) {
+      setDisputeError(err.message || "Failed to request corrections.");
+    } finally {
+      setDisputing(false);
+    }
+  }
+
   const headerRole = role === "BG" ? "BG" : "INVESTOR";
 
   if (loading) {
@@ -435,34 +575,36 @@ export default function VisitDetailPage() {
           </div>
         )}
 
-        {/* Photo Upload */}
-        <section className="mb-6 rounded-lg border border-gray-300 bg-white p-4 space-y-3">
-          <h2 className="text-sm font-semibold text-black">Upload Photos</h2>
-          <p className="text-xs text-gray-600">
-            JPEG, PNG, or WebP. Max 10 files, 20MB each.
-          </p>
+        {/* Photo Upload — show for BG when PENDING or DISPUTED, always for INVESTOR */}
+        {(role === "INVESTOR" || (role === "BG" && visit && (visit.status === "PENDING" || visit.status === "DISPUTED"))) && (
+          <section className="mb-6 rounded-lg border border-gray-300 bg-white p-4 space-y-3">
+            <h2 className="text-sm font-semibold text-black">Upload Photos</h2>
+            <p className="text-xs text-gray-600">
+              JPEG, PNG, or WebP. Max 10 files, 20MB each.
+            </p>
 
-          <div className="flex items-center gap-3">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              multiple
-              className="text-xs file:mr-3 file:rounded file:border-0 file:bg-black file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:bg-gray-800"
-            />
-            <button
-              onClick={handleUpload}
-              disabled={uploading}
-              className="rounded bg-black px-4 py-1.5 text-xs font-semibold text-white hover:bg-gray-800 disabled:opacity-50"
-            >
-              {uploading ? "Uploading..." : "Upload"}
-            </button>
-          </div>
+            <div className="flex items-center gap-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                multiple
+                className="text-xs file:mr-3 file:rounded file:border-0 file:bg-black file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:bg-gray-800"
+              />
+              <button
+                onClick={handleUpload}
+                disabled={uploading}
+                className="rounded bg-black px-4 py-1.5 text-xs font-semibold text-white hover:bg-gray-800 disabled:opacity-50"
+              >
+                {uploading ? "Uploading..." : "Upload"}
+              </button>
+            </div>
 
-          {uploadError && (
-            <p className="text-xs text-red-600">{uploadError}</p>
-          )}
-        </section>
+            {uploadError && (
+              <p className="text-xs text-red-600">{uploadError}</p>
+            )}
+          </section>
+        )}
 
         {/* Photo Gallery */}
         <section className="rounded-lg border border-gray-300 bg-white p-4 space-y-3">
@@ -516,6 +658,144 @@ export default function VisitDetailPage() {
             </div>
           )}
         </section>
+
+        {/* BG Submit Section */}
+        {role === "BG" && visit && visit.status === "PENDING" && (
+          <section className="mt-6 rounded-lg border border-green-300 bg-green-50 p-4 space-y-3">
+            <h2 className="text-sm font-semibold text-green-800">Ready to Submit?</h2>
+            <p className="text-xs text-green-700">
+              Once submitted, the investor will be notified to review your photos.
+            </p>
+            {submitError && <p className="text-xs text-red-600">{submitError}</p>}
+            {submitSuccess && <p className="text-xs text-green-600">{submitSuccess}</p>}
+            <button
+              onClick={handleSubmitVisit}
+              disabled={submitting}
+              className="rounded bg-green-600 px-4 py-2 text-xs font-semibold text-white hover:bg-green-500 disabled:opacity-50"
+            >
+              {submitting ? "Submitting..." : "Submit Visit for Review"}
+            </button>
+          </section>
+        )}
+
+        {/* BG Submitted — awaiting review */}
+        {role === "BG" && visit && visit.status === "SUBMITTED" && (
+          <section className="mt-6 rounded-lg border border-blue-300 bg-blue-50 p-4">
+            <p className="text-xs font-medium text-blue-800">
+              Submitted &mdash; awaiting investor review.
+            </p>
+            <p className="text-[10px] text-blue-600 mt-1">
+              Your visit has been submitted. The investor will review your photos and either approve or request corrections.
+            </p>
+          </section>
+        )}
+
+        {/* BG Disputed — show investor feedback + re-submit */}
+        {role === "BG" && visit && visit.status === "DISPUTED" && (
+          <section className="mt-6 rounded-lg border border-red-300 bg-red-50 p-4 space-y-3">
+            <h2 className="text-sm font-semibold text-red-800">Corrections Requested</h2>
+            {visit.notes && visit.notes.startsWith("[INVESTOR FEEDBACK]") && (
+              <div className="rounded-md border border-red-200 bg-white p-3">
+                <p className="text-[10px] font-medium text-red-700 mb-1">Investor Feedback:</p>
+                <p className="text-xs text-gray-700">
+                  {visit.notes.replace("[INVESTOR FEEDBACK]: ", "")}
+                </p>
+              </div>
+            )}
+            <p className="text-xs text-red-700">
+              Please upload additional photos addressing the feedback above, then re-submit.
+            </p>
+            {submitError && <p className="text-xs text-red-600">{submitError}</p>}
+            {submitSuccess && <p className="text-xs text-green-600">{submitSuccess}</p>}
+            <button
+              onClick={handleSubmitVisit}
+              disabled={submitting}
+              className="rounded bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-500 disabled:opacity-50"
+            >
+              {submitting ? "Submitting..." : "Re-submit Visit"}
+            </button>
+          </section>
+        )}
+
+        {/* BG Approved confirmation */}
+        {role === "BG" && visit && visit.status === "APPROVED" && (
+          <section className="mt-6 rounded-lg border border-green-300 bg-green-50 p-4">
+            <p className="text-xs font-medium text-green-800">
+              Visit approved! Funds have been released.
+            </p>
+          </section>
+        )}
+
+        {/* Investor Review Section — when visit is SUBMITTED */}
+        {role === "INVESTOR" && visit && visit.status === "SUBMITTED" && (
+          <section className="mt-6 rounded-lg border-2 border-yellow-400 bg-yellow-50 p-4 space-y-3">
+            <h2 className="text-sm font-semibold text-yellow-800">Review This Visit</h2>
+            <p className="text-xs text-yellow-700">
+              The BG has submitted photos for your review. Approve to release funds, or request corrections.
+            </p>
+
+            {approveError && <p className="text-xs text-red-600">{approveError}</p>}
+            {approveSuccess && <p className="text-xs text-green-600">{approveSuccess}</p>}
+            {disputeError && <p className="text-xs text-red-600">{disputeError}</p>}
+            {disputeSuccess && <p className="text-xs text-green-600">{disputeSuccess}</p>}
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleApproveVisit}
+                disabled={approving}
+                className="rounded bg-green-600 px-4 py-2 text-xs font-semibold text-white hover:bg-green-500 disabled:opacity-50"
+              >
+                {approving ? "Approving..." : "Approve & Release Funds"}
+              </button>
+              <button
+                onClick={() => setShowDisputeForm(!showDisputeForm)}
+                className="rounded border border-red-300 bg-white px-4 py-2 text-xs font-semibold text-red-600 hover:bg-red-50"
+              >
+                Request Corrections
+              </button>
+            </div>
+
+            {showDisputeForm && (
+              <div className="mt-3 space-y-3 rounded-md border border-red-200 bg-white p-3">
+                <p className="text-xs font-medium text-gray-700">
+                  What corrections are needed?
+                </p>
+                <textarea
+                  value={disputeReason}
+                  onChange={(e) => setDisputeReason(e.target.value)}
+                  rows={3}
+                  maxLength={1000}
+                  placeholder="e.g., Need photos of the backyard and garage..."
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-xs text-black placeholder:text-gray-400 focus:border-red-400 focus:outline-none"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleDisputeVisit}
+                    disabled={disputing}
+                    className="rounded bg-red-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-red-500 disabled:opacity-50"
+                  >
+                    {disputing ? "Sending..." : "Send Back for Corrections"}
+                  </button>
+                  <button
+                    onClick={() => { setShowDisputeForm(false); setDisputeReason(""); }}
+                    className="rounded bg-gray-100 px-4 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Investor Approved confirmation */}
+        {role === "INVESTOR" && visit && visit.status === "APPROVED" && (
+          <section className="mt-6 rounded-lg border border-green-300 bg-green-50 p-4">
+            <p className="text-xs font-medium text-green-800">
+              Visit approved. Funds released.
+            </p>
+          </section>
+        )}
 
         {/* Review Section — Investors only, when visit is SUBMITTED/APPROVED/PAID */}
         {role === "INVESTOR" && visit && ["SUBMITTED", "APPROVED", "PAID"].includes(visit.status) && (

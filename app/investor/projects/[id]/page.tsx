@@ -173,17 +173,31 @@ function VisitsSection({ projectId }: { projectId: string }) {
               <div className="flex items-center gap-2">
                 <span
                   className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                    v.status === "COMPLETED"
+                    v.status === "APPROVED" || v.status === "COMPLETED"
                       ? "bg-green-100 text-green-700"
+                      : v.status === "SUBMITTED"
+                      ? "bg-yellow-100 text-yellow-700"
+                      : v.status === "DISPUTED"
+                      ? "bg-red-100 text-red-700"
                       : v.status === "SCHEDULED"
                       ? "bg-blue-100 text-blue-700"
                       : "bg-gray-100 text-gray-600"
                   }`}
                 >
-                  {v.status}
+                  {v.status === "SUBMITTED"
+                    ? "Needs Review"
+                    : v.status === "DISPUTED"
+                    ? "Corrections Requested"
+                    : v.status}
                 </span>
-                <span className="text-[10px] text-blue-600 font-medium">
-                  {v.photoCount > 0 ? "View Photos" : "View Details"} &rarr;
+                <span className={`text-[10px] font-medium ${
+                  v.status === "SUBMITTED" ? "text-yellow-600" : "text-blue-600"
+                }`}>
+                  {v.status === "SUBMITTED"
+                    ? "Review Photos \u2192"
+                    : v.photoCount > 0
+                    ? "View Photos \u2192"
+                    : "View Details \u2192"}
                 </span>
               </div>
             </div>
