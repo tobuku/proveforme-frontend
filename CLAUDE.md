@@ -104,7 +104,16 @@ useEffect(() => { document.title = "Page Name \u2014 ProveForMe"; }, []);
 
 ### Visit Detail (`visits/[visitId]/page.tsx`)
 - Photo upload, gallery with lightbox, download, and delete
-- **Investor review section** (visible when visit is SUBMITTED/APPROVED/PAID):
+- **BG workflow section** (role-based, status-driven):
+  - **PENDING**: Upload photos + green "Submit Visit for Review" button
+  - **SUBMITTED**: Upload hidden, blue "Awaiting investor review" status message
+  - **DISPUTED**: Red "Corrections Requested" section showing investor feedback from visit.notes, upload re-enabled, "Re-submit Visit" button
+  - **APPROVED**: Green "Visit approved! Funds have been released." confirmation
+- **Investor review actions** (visible when visit is SUBMITTED):
+  - Yellow highlighted section with "Approve & Release Funds" (green) and "Request Corrections" (red outline) buttons
+  - Request Corrections expands textarea for correction instructions, sends back as DISPUTED with reason
+  - Approve triggers visit status update + automatic payment release
+- **Investor rating section** (visible when visit is SUBMITTED/APPROVED/PAID):
   - 5-star rating selector with hover preview
   - 6 feedback tag chips: Responsive, Good Communication, Takes Quality Pictures, Takes Quality Videos, Punctual, Thorough
   - Optional comment textarea (500 char max)
@@ -113,6 +122,7 @@ useEffect(() => { document.title = "Page Name \u2014 ProveForMe"; }, []);
 
 ### Investor Project Detail (`investor/projects/[id]/page.tsx`)
 - BG star rating (yellow star + average) displayed next to BG names in Interested BGs and Visits sections
+- **Visit status badges**: SUBMITTED → yellow "Needs Review" with "Review Photos →" CTA, DISPUTED → red "Corrections Requested", APPROVED/COMPLETED → green badge
 
 ## Deployment
 Push to `main` triggers Vercel auto-deploy. Changes are typically live within 60 seconds. Users may need hard refresh (Ctrl+Shift+R) or incognito to bypass cache.
