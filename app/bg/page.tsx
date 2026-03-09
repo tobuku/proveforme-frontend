@@ -554,6 +554,23 @@ export default function BgDashboardPage() {
             )}
           </div>
 
+          {/* Training Banner */}
+          <a
+            href="/training"
+            className="flex items-center justify-between gap-4 rounded-xl bg-red-600 border border-red-700 px-5 py-4 text-white shadow-sm hover:bg-red-700 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">📋</span>
+              <div>
+                <p className="text-sm font-bold uppercase tracking-wide">BG Training Required</p>
+                <p className="text-xs text-red-100 mt-0.5">New to ProveForMe? Review our training guide before your first visit.</p>
+              </div>
+            </div>
+            <span className="shrink-0 rounded-lg bg-white text-red-600 text-xs font-bold px-3 py-1.5 hover:bg-red-50">
+              View Training &rarr;
+            </span>
+          </a>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column */}
           <div className="space-y-6">
