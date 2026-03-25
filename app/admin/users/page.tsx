@@ -16,6 +16,7 @@ type AdminUser = {
   role: string;
   city: string;
   state: string;
+  serviceZipCodes: string | null;
   isVerified: boolean;
   stripeOnboarded: boolean;
   createdAt: string;
@@ -229,7 +230,7 @@ export default function AdminUsersPage() {
                   <th className="px-3 py-2 text-left font-semibold">Name</th>
                   <th className="px-3 py-2 text-left font-semibold">Email</th>
                   <th className="px-3 py-2 text-left font-semibold">Role</th>
-                  <th className="px-3 py-2 text-left font-semibold">Location</th>
+                  <th className="px-3 py-2 text-left font-semibold">Zip Codes</th>
                   <th className="px-3 py-2 text-left font-semibold">Verified</th>
                   <th className="px-3 py-2 text-left font-semibold">Stripe</th>
                   <th className="px-3 py-2 text-left font-semibold">Joined</th>
@@ -251,7 +252,11 @@ export default function AdminUsersPage() {
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-3 py-2">
-                      {user.city}, {user.state}
+                      {user.serviceZipCodes
+                        ? user.serviceZipCodes
+                        : user.city && user.state
+                          ? `${user.city}, ${user.state}`
+                          : "—"}
                     </td>
                     <td className="px-3 py-2">{user.isVerified ? "Yes" : "No"}</td>
                     <td className="px-3 py-2">
