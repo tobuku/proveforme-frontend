@@ -123,8 +123,8 @@ export default function CreateProjectPage() {
       return;
     }
 
-    if (!title || !city || !stateVal || !payPerVisit) {
-      setError("Title, city, state, and pay per visit are required.");
+    if (!title || !city || !stateVal || !zipCode || !payPerVisit) {
+      setError("Title, city, state, zip code, and pay per visit are required.");
       return;
     }
 
@@ -271,7 +271,7 @@ export default function CreateProjectPage() {
 
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-black">
-                  Zip Code
+                  Zip Code *
                 </label>
                 <input
                   type="text"
